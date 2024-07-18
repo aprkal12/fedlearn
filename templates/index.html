@@ -1,0 +1,69 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wandb Visualization</title>
+</head>
+<body>
+    <h1>Wandb Visualization</h1>
+    Wandb 시각화 자료를 렌더링할 iframe 
+    <iframe src="{{ report_url }}" width="800" height="600" frameborder="0"></iframe>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federated Learning Dashboard</title>
+</head>
+<body>
+    <h1>Client 정보수집 테스트</h1>
+    <h2>현재 연결된 클라이언트들</h2>
+    <ul>
+        {% for client, ip in clients.items() %}
+            <li>{{ client }} - {{ ip }}</li>
+        {% endfor %}
+    </ul>
+    <button onclick="aggregateParameters()">Aggregate Parameters</button>
+    <!-- <button onclick="aggregateGradients()">Aggregate Gradients</button> -->
+    <button onclick="fetchAggregatedParameters()">집계된 파라미터 가져오기</button>
+    <button onclick="get_param()">파라미터 가져오기 테스트</button>
+
+    <script>
+        function aggregateParameters() {
+            fetch('/aggregate', {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            });
+        }
+        function fetchAggregatedParameters() {
+            fetch('/parameter', {
+                method: 'GET',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            });
+        }
+        function get_param() {
+            const client = {
+                hostname: window.location.hostname
+            };
+            fetch('/trigger', {
+                method: 'POST',
+                body: JSON.stringify(client),
+            })
+            .then(response => response.text())
+            .then(data => console.log(data))
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
