@@ -1,5 +1,4 @@
-# from gevent import monkey
-# monkey.patch_all()
+# 블루 프린트 써서 기능별로 나누기
 
 import json
 import threading
