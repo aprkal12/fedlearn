@@ -17,21 +17,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Federated Learning Dashboard</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js" defer></script>
 </head>
 <body>
     <h1>Client 정보수집 테스트</h1>
     <h2>현재 연결된 클라이언트들</h2>
-    <ul>
-        {% for client, ip in clients.items() %}
-            <li>{{ client }} - {{ ip }}</li>
-        {% endfor %}
-    </ul>
+    <ul id = "client_list"></ul>
+
+    <h2>글로벌 모델 상태</h2>
+    <p>글로벌 모델 정확도: <span id="global-model-accuracy">0.0</span>%</p>
+    <p>현재 라운드: <span id="current-round">0</span></p>
+    <p>참여 클라이언트 수: <span id="client_num">0</span></p>
+    <p>마지막 업데이트: <span id="last-updated">Never</span></p>
+
+
     <button onclick="aggregateParameters()">Aggregate Parameters</button>
     <!-- <button onclick="aggregateGradients()">Aggregate Gradients</button> -->
     <button onclick="fetchAggregatedParameters()">집계된 파라미터 가져오기</button>
     <button onclick="get_param()">파라미터 가져오기 테스트</button>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var socket = io();
+            socket.on('update_data', function(data) {
+                console.log('Received data:', data);
+                document.getElementById('global-model-accuracy').textContent = data.global_model_accuracy.toFixed(2);
+                document.getElementById('current-round').textContent = data.current_round;
+                document.getElementById('last-updated').textContent = data.last_updated;
+                document.getElementById('client_num').textContent = data.client_num;
+                
+                var clientList = document.getElementById('client_list');
+                clientList.innerHTML = '';
+                for (var client in data.clients) {
+                    console.log('Client:', client, 'IP:', data.clients[client]);
+                    var li = document.createElement('li');
+                    li.textContent = client + ' - ' + data.clients[client];
+                    clientList.appendChild(li);
+                }
+                
+            });
+            socket.emit('request_update');
+
+            socket.on('reload', function() {
+                location.reload();
+            });
+        });
+
         function aggregateParameters() {
             fetch('/aggregate', {
                 method: 'POST',

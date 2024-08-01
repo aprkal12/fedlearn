@@ -2,7 +2,7 @@ from flask import current_app, request, g
 from . import client_bp
 import zstd
 import pickle
-from Resnet_infer import Inference
+from models.Resnet_infer import Inference
 import global_vars as gv
 
 
@@ -21,3 +21,10 @@ def register_client():
     comp_data = zstd.compress(binary_data)
 
     return comp_data
+
+def unregister_client(client_name):
+    if client_name in gv.client_list:
+        del gv.client_list[client_name]
+        print("클라이언트 삭제 확인")
+        print(gv.client_list)
+        return "클라이언트 삭제 완료"

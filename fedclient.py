@@ -4,7 +4,7 @@ import json
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import torch
-from Resnet_infer import Inference
+from models.Resnet_infer import Inference
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 

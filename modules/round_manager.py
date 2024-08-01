@@ -3,13 +3,19 @@ from flask_socketio import emit, SocketIO
 from . import aggregate_bp
 import threading
 import torch
-from Resnet_infer import Inference
+from models.Resnet_infer import Inference
 import global_vars as gv
 
 parameter_lock = threading.Lock()
 expected_clients = 2
 
 @aggregate_bp.route('/aggregate', methods=['POST'])
+def round_manager():
+    gv.round_num += 1
+    print("라운드 %d 시작" % gv.round_num)
+    return aggregate_parameters()
+
+
 def aggregate_parameters():
     global expected_clients
 
@@ -29,8 +35,13 @@ def aggregate_parameters():
             gv.parameters.clear()
             gv.post_num = 0
 
+            gv.global_model_status[gv.round_num] = 100*val_metric
             gv.socketio.emit('aggregated_params')
+            notify_clients()
             return "집계 완료"
         else:
             print("집계 조건 충족 안됨")
     return "아직 모든 파라미터가 수신되지 않았습니다."
+
+def notify_clients():
+    gv.socketio.emit('reload')

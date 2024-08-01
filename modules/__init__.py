@@ -8,5 +8,5 @@ trigger_bp = Blueprint('trigger', __name__)
 
 # 각 블루프린트 모듈에서 라우트를 임포트
 from .parameter import *
-from .aggregate import *
+from .round_manager import *
 from .client_manager import *

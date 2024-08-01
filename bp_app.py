@@ -1,8 +1,9 @@
 from flask import Flask, current_app, render_template, g
 from flask_socketio import SocketIO
 from modules import parameter_bp, aggregate_bp, client_bp, trigger_bp
-from Resnet_infer import Inference
+from models.Resnet_infer import Inference
 import global_vars as gv
+import datetime
 
 
 app = Flask(__name__)
@@ -28,6 +29,27 @@ def before_request():
 @app.route('/')
 def mainpage():
     return render_template('index.html', clients=gv.client_list)
+
+@gv.socketio.on('request_update')
+def handle_request_update():
+    round_num = gv.round_num
+    clients = gv.client_list
+    clients_num = len(clients)
+
+    if round_num == 0:
+        gv.global_model_status[0] = 0.0
+        clients_num = 0
+
+    global_model = gv.global_model_status[gv.round_num]
+    
+    data = {
+        'global_model_accuracy': global_model,  # 예시 값
+        'current_round': round_num,             # 예시 값
+        'clients': clients,
+        'client_num': clients_num,
+        'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    gv.socketio.emit('update_data', data)
 
 if __name__ == '__main__':
 
