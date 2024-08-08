@@ -1,46 +1,25 @@
-
-# model
+import os
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
-
-# dataset and transformation
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision import datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-import os
-
-# display images
-from torchvision import utils
 import matplotlib.pyplot as plt
-from torchsummary import summary
-
-# utils
 import numpy as np
 import time
 import copy
 
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from models.Resnet_blocks import BasicBlock
+from models.Resnet_mainblock import ResNet, resnet18, resnet50
+from models.Resnet_setdata import SetData
 
-from Resnet_blocks import BasicBlock
-from Resnet_mainblock import ResNet, resnet18
-from Resnet_mainblock import resnet50
-from Resnet_setdata import SetData
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-
-# wandb.init(
-#     project="Federated Learning",
-#     entity="aprkal12",
-#     config={
-#         "learning_rate": 0.001,
-#         "architecture": "Resnet18",
-#         "dataset": "CIFAR-10",
-#     }
-# )
-# wandb.run.name = "Resnet18_CIFAR-10_B=100%"
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 class Inference():
     def __init__(self):
@@ -49,6 +28,7 @@ class Inference():
         self.optimizer = None
         self.device = None
         self.train_loader = None
+        self.val_loader = None
         self.test_loader = None
         self.lr_scheduler = None
         self.params_train = None
@@ -56,20 +36,21 @@ class Inference():
         self.metric_hist = None
         self.train_dl = None
         self.val_dl = None
+        self.test_dl = None
         self.best_model_wts = None
         self.epoch = None
 
-    
-    def set_variable(self):
+    def set_variable(self, data_size):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(self.device)
         self.model = resnet18().to(self.device)
         # self.model = resnet50().to(self.device)
 
-        self.train_dl, self.val_dl = SetData().run()
+        self.train_dl, self.val_dl, self.test_dl = SetData().run(data_size)
         self.loss_func = nn.CrossEntropyLoss(reduction='sum')
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=10)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
+        # self.lr_scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=10)
+        # 스케쥴러 -> 10 에폭동안 val_loss가 줄어들지 않으면 lr을 0.1배로 줄인다.
 
     # lr 계산
     def get_lr(self, opt):
@@ -129,11 +110,8 @@ class Inference():
         lr_scheduler=params["lr_scheduler"]
         path2weights=params["path2weights"]
 
-        loss_history = {'train': [], 'val': []}
-        metric_history = {'train': [], 'val': []}
-
-        # # GPU out of memoty error
-        # best_model_wts = copy.deepcopy(model.state_dict())
+        self.loss_hist = {'train': [], 'val': []}
+        self.metric_hist = {'train': [], 'val': []}
 
         best_loss = float('inf')
 
@@ -149,40 +127,42 @@ class Inference():
 
             model.train()
             train_loss, train_metric = self.loss_epoch(model, loss_func, train_dl, sanity_check, opt)
-            loss_history['train'].append(train_loss)
-            metric_history['train'].append(train_metric)
+            self.loss_hist['train'].append(train_loss)
+            self.metric_hist['train'].append(train_metric)
 
             model.eval()
             with torch.no_grad():
                 val_loss, val_metric = self.loss_epoch(model, loss_func, val_dl, sanity_check)
-            loss_history['val'].append(val_loss)
-            metric_history['val'].append(val_metric)
+            self.loss_hist['val'].append(val_loss)
+            self.metric_hist['val'].append(val_metric)
 
             if val_loss < best_loss:
                 early_stop = 0
                 best_loss = val_loss
                 self.best_model_wts = model.state_dict()
-
-                # torch.save(model.state_dict(), path2weights)
-                # print('Copied best model weights!')
                 best_epoch = epoch+1
                 print('Get best val_loss')
             
-
-            lr_scheduler.step(val_loss)
+            # lr_scheduler.step(val_loss)
 
             print("train loss: %.6f, val loss: %.6f, accuracy: %.2f %%, time: %.4f min" %(train_loss, val_loss, 100*val_metric, (time.time()-start_time)/60))
             print('-'*10)
-            # wandb.log({"train loss":train_loss, "val loss":val_loss, "accuracy": val_metric})
-            if early_stop > 20:
-                print("early stop!!!")
-                print('-'*10)
-                break
+
+            # if early_stop > 20: # 얼리스탑 커맨드
+            #     print("early stop!!!")
+            #     print('-'*10)
+            #     break
 
         print("best epoch : ", best_epoch)
-        # model.load_state_dict(best_model_wts)
+        self.early_stop_epoch = epoch + 1  # Update early stop epoch
 
-        return model, loss_history, metric_history
+        return model, self.loss_hist, self.metric_hist
+
+    def test_model(self, model, test_dl):
+        model.eval()
+        with torch.no_grad():
+            test_loss, test_metric = self.loss_epoch(model, self.loss_func, test_dl)
+        return test_loss, test_metric
     
     def get_params_file(self):
         torch.save(self.parameter_extract(), 'models\\weights.pt')
@@ -203,12 +183,12 @@ class Inference():
     
     def fill_graph(self):
         # Train-Validation Progress
-        num_epochs=self.params_train["num_epochs"]
+        num_epochs = self.early_stop_epoch if self.early_stop_epoch is not None else self.params_train["num_epochs"]
 
         # plot loss progress
         plt.title("Train-Val Loss")
-        plt.plot(range(1,num_epochs+1),self.loss_hist["train"],label="train")
-        plt.plot(range(1,num_epochs+1),self.loss_hist["val"],label="val")
+        plt.plot(range(1, num_epochs + 1), self.loss_hist["train"], label="train")
+        plt.plot(range(1, num_epochs + 1), self.loss_hist["val"], label="val")
         plt.ylabel("Loss")
         plt.xlabel("Training Epochs")
         plt.legend()
@@ -216,8 +196,8 @@ class Inference():
 
         # plot accuracy progress
         plt.title("Train-Val Accuracy")
-        plt.plot(range(1,num_epochs+1),self.metric_hist["train"],label="train")
-        plt.plot(range(1,num_epochs+1),self.metric_hist["val"],label="val")
+        plt.plot(range(1, num_epochs + 1), self.metric_hist["train"], label="train")
+        plt.plot(range(1, num_epochs + 1), self.metric_hist["val"], label="val")
         plt.ylabel("Accuracy")
         plt.xlabel("Training Epochs")
         plt.legend()
@@ -237,24 +217,28 @@ class Inference():
     
     def run(self):
         self.params_train = {
-            'num_epochs':self.epoch,
-            'optimizer':self.optimizer,
-            'loss_func':self.loss_func,
-            'train_dl':self.train_dl,
-            'val_dl':self.val_dl,
-            'sanity_check':False,
-            'lr_scheduler':self.lr_scheduler,
-            'path2weights':'./models/weights.pt',
+            'num_epochs': self.epoch,
+            'optimizer': self.optimizer,
+            'loss_func': self.loss_func,
+            'train_dl': self.train_dl,
+            'val_dl': self.val_dl,
+            'sanity_check': False,
+            'lr_scheduler': self.lr_scheduler,
+            'path2weights': './models/weights.pt',
         }
         self.createFolder('./models')
 
         self.model, self.loss_hist, self.metric_hist = self.train_val(self.model, self.params_train)
 
+        test_loss, test_metric = self.test_model(self.model, self.test_dl)
+        print(f"Test Loss: {test_loss:.6f}, Test Accuracy: {100*test_metric:.2f}%")
+        
+        # self.fill_graph()  # 학습 및 검증 결과 그래프 출력
+
 if __name__ == '__main__':
     infer = Inference()
-    infer.set_variable()
-    infer.set_epoch(1)
+    infer.set_variable(1) # 사용할 데이터 사이즈 (0 ~ 1) 비율로 설정
+    infer.set_epoch(50)
     # summary(infer.model, (3, 32, 32))
     # print(infer.parameter_extract())
     infer.run()
-    
