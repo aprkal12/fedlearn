@@ -8,7 +8,7 @@ model = None # 모델 객체
 
 avg_weights = None # 평균 파라미터
 
-parameters = [] # 클라이언트에서 받은 파라미터들
+parameters = {} # 클라이언트에서 받은 파라미터들
 
 socketio = SocketIO() # 소켓 객체
 

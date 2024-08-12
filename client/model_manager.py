@@ -5,7 +5,7 @@ import zstd
 class ModelManager:
     def __init__(self):
         self.model = Inference()
-        self.model.set_variable()
+        self.model.set_variable(0.5)
         self.model.set_epoch(5)
     
     def set_epoch(self, n):

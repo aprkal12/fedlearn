@@ -35,7 +35,9 @@ class SetData():
         train_indices = list(range(total_train_size))
         np.random.shuffle(train_indices)
 
-        val_test_indices = list(range(len(test_dataset)))
+        val_test_data_size = 10000 if total_train_size * 0.2 > 10000 else total_train_size * 0.2
+
+        val_test_indices = list(range(int(val_test_data_size)))
         np.random.shuffle(val_test_indices)
         val_size = len(val_test_indices) // 2
         test_size = len(val_test_indices) - val_size

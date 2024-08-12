@@ -15,16 +15,20 @@ def handle_parameters():
         data = request.json
         client_name = data['client_name']
         print(f"{client_name}님의 파라미터를 수신합니다.")
-        # comp_data = base64.b64decode(data['params']) # base64 디코딩
-        comp_data = bytes.fromhex(data['params']) # hex 디코딩
+        comp_data = base64.b64decode(data['params']) # base64 디코딩
+        # comp_data = bytes.fromhex(data['params']) # hex 디코딩
         # comp_data = request.data
         decomp_data = zstd.decompress(comp_data)
         client_params = pickle.loads(decomp_data)
         print("Params received from client")
         with parameter_lock:
-            gv.parameters.append(client_params)
+            # gv.parameters.append(client_params)
+            gv.parameters[client_name] = client_params
             gv.post_num += 1
             print("post_num : ", gv.post_num)
+        
+        # print(gv.parameters.keys())
+        
 
         return "server received params"
 

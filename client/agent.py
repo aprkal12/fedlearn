@@ -34,8 +34,8 @@ class ClientAgent:
             comp_data = self.network_manager.fetch_aggregated_params()
             if comp_data:
                 params = self.model_manager.decompress_params(comp_data)
-                # self.model_manager.load_params(params) # 버튼을 눌러서 트레이닝 시키도록 대기만 하게 함
-                # self.train_and_send()
+                self.model_manager.load_params(params) # 버튼을 눌러서 트레이닝 시키도록 대기만 하게 함
+                self.train_and_send()
         except Exception as e:
             print(f"Error during aggregated parameters processing: {e}")
 
@@ -43,7 +43,8 @@ class ClientAgent:
         self.model_manager.train_model()
         updated_params = self.model_manager.extract_params()
         compressed_params = self.model_manager.compress_params(updated_params)
-        self.network_manager.send_params(compressed_params)
+        result = self.network_manager.send_params(compressed_params)
+        print(result)
 
     def start(self):
         self.connect_to_server()

@@ -27,7 +27,9 @@ def aggregate_parameters():
         if gv.post_num == expected_clients:
             print("모든 파라미터 수신 완료")
             gv.avg_weights = {}
-            tensorlist_float = [{key: value.float() for key, value in client_weights.items()} for client_weights in gv.parameters]
+            # tensorlist_float = [{key: value.float() for key, value in client_weights.items()} for client_weights in gv.parameters]
+            tensorlist_float = [{key: value.float() for key, value in client_weights.items()} for client_weights in (client_data for client_data in gv.parameters.values())]
+
             for key in tensorlist_float[0].keys():
                 gv.avg_weights[key] = torch.stack([client_weights[key] for client_weights in tensorlist_float], dim=0).mean(dim=0)
             print("평균 파라미터 계산 완료")
