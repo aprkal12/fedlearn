@@ -15,7 +15,8 @@ def register_client():
     gv.client_list[client_name] = client_ip
     print("클라이언트 접속 확인")
     print(gv.client_list)
-
+    gv.socketio.emit('reload')
+    
     params = gv.model.parameter_extract()
     binary_data = pickle.dumps(params)
     comp_data = zstd.compress(binary_data)

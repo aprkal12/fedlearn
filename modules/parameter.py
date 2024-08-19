@@ -39,3 +39,14 @@ def handle_parameters():
         binary_data = pickle.dumps(gv.avg_weights)
         comp_data = zstd.compress(binary_data)
         return comp_data
+
+@parameter_bp.route('/parameter/signal', methods=['POST'])
+def signal():
+    data = request.json
+    print(data)
+    name = data['name']
+    signal = data['signal']
+    gv.client_status[name] = signal
+    gv.socketio.emit('update_status', {'name': name, 'signal': signal})
+    gv.socketio.emit('reload')
+    return "signal received"

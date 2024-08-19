@@ -14,6 +14,8 @@ def round_manager():
     gv.round_num += 1
     print("round %d start" % gv.round_num)
     msg = aggregate_parameters()
+    gv.socketio.emit('aggregated_params')
+    notify_clients()
     global_model_update()
     next_round_set()
     return msg
@@ -21,8 +23,6 @@ def round_manager():
 
 def aggregate_parameters():
     global expected_clients
-    # print("post_num : ", gv.post_num)
-    # print("expected_clients : ", expected_clients)
     with parameter_lock:
         if gv.post_num == expected_clients:
             print("모든 파라미터 수신 완료")
@@ -33,9 +33,8 @@ def aggregate_parameters():
             for key in tensorlist_float[0].keys():
                 gv.avg_weights[key] = torch.stack([client_weights[key] for client_weights in tensorlist_float], dim=0).mean(dim=0)
             print("평균 파라미터 계산 완료")
+
             
-            gv.socketio.emit('aggregated_params')
-            notify_clients()
             return "aggregated"
         else:
             print("집계 조건 충족 안됨")
@@ -47,6 +46,7 @@ def notify_clients():
 def next_round_set():
     gv.parameters.clear()
     gv.post_num = 0
+    
 
 def global_model_update():
     gv.model.load_parameter(gv.avg_weights)
