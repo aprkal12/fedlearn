@@ -6,7 +6,7 @@ class ModelManager:
     def __init__(self):
         self.model = Inference()
         self.model.set_variable(0.5)
-        self.model.set_epoch(5)
+        self.model.set_epoch(2)
     
     def set_epoch(self, n):
         self.model.set_epoch(n)

@@ -19,7 +19,7 @@ class NetworkManager:
         return size_in_bytes / (1024 * 1024)
 
     def send_params(self, params):
-        name, ip = utils.set_host()
+        name, ip = utils.get_host()
         
         # comp_data = zstd.compress(pickle.dumps(params))
         # size_existing_method = len(comp_data)
@@ -47,10 +47,17 @@ class NetworkManager:
             print("아직 이번 라운드 파라미터가 집계되지 않았습니다.")
             return None
     
-    def connect_socket(self, on_connect, on_disconnect, on_aggregated_params):
+    def post_params_signal(self, signal):
+        name = utils.get_hostname()
+        data = {'name' : name, 'signal' : signal}
+        response = requests.post(f"{self.server_url}/parameter/signal", json=data)
+        print(response)
+    
+    def connect_socket(self, on_connect, on_disconnect, on_aggregated_params, on_train):
         self.sio.on('connect', on_connect)
         self.sio.on('disconnect', on_disconnect)
         self.sio.on('aggregated_params', on_aggregated_params)
+        self.sio.on('train', on_train)
         self.sio.connect(self.server_url)
 
     def wait_socket(self):
