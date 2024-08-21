@@ -1,0 +1,74 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+    margin: 0;
+}
+
+.container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+p, ul {
+    margin: 10px 0;
+    color: #555;
+    text-align: left;
+    width: 100%;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    text-align: left;
+}
+
+ul li {
+    padding: 5px 0;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+    width: 100%;  /* 버튼을 전체 너비로 확장 */
+    max-width: 200px;  /* 버튼의 최대 너비 설정 */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.status-span {
+    font-weight: bold;
+    color: #007BFF;
+}

@@ -35,6 +35,10 @@ def training():
 
     if count == start:
         gv.socketio.emit('training')
+        gv.round_num += 1
+        print()
+        print("="*10)
+        print("round %d start" % gv.round_num)
         print("training signal sent")
         return "training signal sent"
     else:

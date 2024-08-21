@@ -14,18 +14,16 @@ def handle_parameters():
     if request.method == 'POST':  # 클라이언트로부터 파라미터 수신
         data = request.json
         client_name = data['client_name']
-        print(f"{client_name}님의 파라미터를 수신합니다.")
+        print(f"params received from {client_name}")
         comp_data = base64.b64decode(data['params']) # base64 디코딩
         # comp_data = bytes.fromhex(data['params']) # hex 디코딩
         # comp_data = request.data
         decomp_data = zstd.decompress(comp_data)
         client_params = pickle.loads(decomp_data)
-        print("Params received from client")
         with parameter_lock:
             # gv.parameters.append(client_params)
             gv.parameters[client_name] = client_params
             gv.post_num += 1
-            print("post_num : ", gv.post_num)
         
         # print(gv.parameters.keys())
         
@@ -43,9 +41,9 @@ def handle_parameters():
 @parameter_bp.route('/parameter/signal', methods=['POST'])
 def signal():
     data = request.json
-    print(data)
     name = data['name']
     signal = data['signal']
+    print(f"signal received -> {name} : {signal}")
     gv.client_status[name] = signal
     gv.socketio.emit('update_status', {'name': name, 'signal': signal})
     gv.socketio.emit('reload')

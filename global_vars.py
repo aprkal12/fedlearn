@@ -14,6 +14,6 @@ socketio = SocketIO() # 소켓 객체
 
 round_num = 0 # 현재 라운드
 
-global_model_status = {} # 글로벌 모델 정확도
+global_model_accuracy = [] # 글로벌 모델 정확도
 
 client_status = {}

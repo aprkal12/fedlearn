@@ -14,19 +14,25 @@ app.register_blueprint(client_bp)
 
 @gv.socketio.on('request_update')
 def handle_request_update():
-    print("web_reloading")
+    # print("web_reloading")
     round_num = gv.round_num
     clients = gv.client_list
     client_status = gv.client_status # 클라이언트 상태
     clients_num = len(clients)
 
     if round_num == 0:
-        gv.global_model_status[0] = 0.0
         clients_num = 0
         for client in clients:
-            client_status[client] = 'waiting'
+            if client not in client_status.keys(): # 상태에 대한 정보가 없다면
+                client_status[client] = 'waiting'
 
-    global_model = gv.global_model_status[gv.round_num]
+    if not gv.global_model_accuracy:
+        gv.global_model_accuracy.append(0.0)
+        global_model = gv.global_model_accuracy[0]
+    elif len(gv.global_model_accuracy) < round_num+1:
+        global_model = gv.global_model_accuracy[round_num-1] # 현재 라운드 학습중 (이전 라운드 정확도 표시)
+    else:
+        global_model = gv.global_model_accuracy[round_num]
     
     data = {
         'global_model_accuracy': global_model,  
@@ -34,6 +40,8 @@ def handle_request_update():
         'clients': clients,
         'client_num': clients_num,
         'client_status': client_status,
+        'rounds': list(range(0, len(gv.global_model_accuracy))),  # 라운드 숫자 리스트 생성
+        'accuracy_history': gv.global_model_accuracy,  # 정확도 히스토리
         'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     gv.socketio.emit('update_data', data)
