@@ -25,13 +25,14 @@
     <ul id = "client_list"></ul>
 
     <h2>글로벌 모델 상태</h2>
-    <p>글로벌 모델 정확도: <span id="global-model-accuracy">0.0</span>%</p>
     <p>현재 라운드: <span id="current-round">0</span></p>
     <p>참여 클라이언트 수: <span id="client_num">0</span></p>
+    <p>글로벌 모델 정확도: <span id="global-model-accuracy">0.0</span>%</p>
     <p>마지막 업데이트: <span id="last-updated">Never</span></p>
 
 
     <button onclick="aggregateParameters()">Aggregate</button>
+    <button onclick="startClientTraining()">Train Clients</button>
     <!-- <button onclick="aggregateGradients()">Aggregate Gradients</button> -->
     <!-- <button onclick="fetchAggregatedParameters()">집계된 파라미터 가져오기</button> -->
     <!-- <button onclick="get_param()">파라미터 가져오기 테스트</button> -->
@@ -64,6 +65,21 @@
             socket.on('update_status', function(data) {
                 var client = data.name;
                 var signal = data.signal;
+                
+                // 'name'이 리스트인지 확인
+                if (Array.isArray(client)) {
+                    // 리스트인 경우 모든 클라이언트 이름에 대해 상태 업데이트
+                    names.forEach(function(client) {
+                        updateClientStatus(client, signal);
+                    });
+                } else {
+                    // 단일 클라이언트 이름인 경우
+                    updateClientStatus(names, signal);
+                }
+            });
+            
+            // 클라이언트 상태 업데이트를 위한 공통 함수
+            function updateClientStatus(client, signal) {
                 var li = document.querySelector(`li[data-client="${client}"]`);
                 if (li) {
                     var statusSpan = li.querySelector('.status-span');
@@ -74,8 +90,9 @@
                     }
                     statusSpan.textContent = ` - Status: ${signal}`;
                 }
-            });
-            
+            }
+
+
             socket.emit('request_update');
 
             socket.on('reload', function() {
@@ -90,6 +107,15 @@
             .then(response => response.text())
             .then(data => {
                 alert(data);
+            });
+        }
+        function startClientTraining() {
+            fetch('/client/training', {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Training');
             });
         }
         // function fetchAggregatedParameters() {

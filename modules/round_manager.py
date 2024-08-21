@@ -15,6 +15,7 @@ def round_manager():
     print("round %d start" % gv.round_num)
     msg = aggregate_parameters()
     gv.socketio.emit('aggregated_params')
+    # gv.socketio.emit('update_status', {'name': gv.client_list, 'signal': 'waiting'})
     notify_clients()
     global_model_update()
     next_round_set()

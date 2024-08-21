@@ -26,34 +26,38 @@ class ClientAgent:
         
         params = self.model_manager.decompress_params(response.content)
         self.model_manager.load_params(params)
-        self.train_and_send()
+        self.train()
+        self.send()
     
     def on_disconnect(self):
         print("서버 연결이 끊어졌습니다.")
 
     def on_aggregated_params(self):
         print("집계된 파라미터 수신")
-        self.network_manager.post_params_signal("complete")
         try:
             comp_data = self.network_manager.fetch_aggregated_params()
             if comp_data:
                 self.params = self.model_manager.decompress_params(comp_data)
-                self.model_manager.load_params(self.params) # 버튼을 눌러서 트레이닝 시키도록 대기만 하게 함
-                self.train_and_send()
+                self.network_manager.post_params_signal("ready")
         except Exception as e:
             self.network_manager.post_params_signal("error")
             print(f"Error during aggregated parameters processing: {e}")
     
     def on_train(self):
-        self.model_manager.load_params(self.params) 
-        self.train_and_send()
+        print("train start")
+        self.model_manager.load_params(self.params)
+        self.network_manager.post_params_signal("training") # 서버로 상태 전송
+        self.train()
+        self.send()
 
-    def train_and_send(self):
+    def train(self):
         self.model_manager.train_model()
+    
+    def send(self):
         updated_params = self.model_manager.extract_params()
         compressed_params = self.model_manager.compress_params(updated_params)
         result = self.network_manager.send_params(compressed_params)
-        print(result)
+        self.network_manager.post_params_signal("Finished sending parameters")
 
     def start(self):
         self.connect_to_server()

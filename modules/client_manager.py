@@ -23,9 +23,30 @@ def register_client():
 
     return comp_data
 
+@client_bp.route('/client/training', methods=['POST'])
+def training():
+    count = 0
+    start = len(gv.client_list)
+    for client in gv.client_list:
+        if gv.client_status[client] == 'ready':
+            count += 1
+        else:
+            break
+
+    if count == start:
+        gv.socketio.emit('training')
+        print("training signal sent")
+        return "training signal sent"
+    else:
+        print("not all clients are ready")
+        return "not all clients are ready"
+
+
 def unregister_client(client_name):
     if client_name in gv.client_list:
         del gv.client_list[client_name]
         print("클라이언트 삭제 확인")
         print(gv.client_list)
         return "클라이언트 삭제 완료"
+
+

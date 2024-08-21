@@ -51,13 +51,13 @@ class NetworkManager:
         name = utils.get_hostname()
         data = {'name' : name, 'signal' : signal}
         response = requests.post(f"{self.server_url}/parameter/signal", json=data)
-        print(response)
+        # print(response)
     
     def connect_socket(self, on_connect, on_disconnect, on_aggregated_params, on_train):
         self.sio.on('connect', on_connect)
         self.sio.on('disconnect', on_disconnect)
         self.sio.on('aggregated_params', on_aggregated_params)
-        self.sio.on('train', on_train)
+        self.sio.on('training', on_train)
         self.sio.connect(self.server_url)
 
     def wait_socket(self):
