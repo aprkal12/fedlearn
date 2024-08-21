@@ -1,3 +1,4 @@
+import sys
 from model_manager import ModelManager
 from network_manager import NetworkManager
 import utils
@@ -24,13 +25,12 @@ class ClientAgent:
         client_info = {"hostname": name, "ip": ip}
         response = self.network_manager.register_client(client_info)
         
-        params = self.model_manager.decompress_params(response.content)
-        self.model_manager.load_params(params)
-        self.train()
-        self.send()
+        self.params = self.model_manager.decompress_params(response.content)
+        self.network_manager.post_params_signal("ready")
     
     def on_disconnect(self):
         print("서버 연결이 끊어졌습니다.")
+        sys.exit(0)
 
     def on_aggregated_params(self):
         print("집계된 파라미터 수신")
