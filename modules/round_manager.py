@@ -7,7 +7,7 @@ from models.Resnet_infer import Inference
 import global_vars as gv
 
 parameter_lock = threading.Lock()
-expected_clients = 2
+expected_clients = len(gv.client_list)
 
 @aggregate_bp.route('/aggregate', methods=['POST'])
 def round_manager():
@@ -20,6 +20,7 @@ def round_manager():
         global_model_update()
         print("round %d complete" % gv.round_num)
         print("="*10)
+        print()
         print("next round setting...")
         next_round_set()
     return msg
@@ -27,8 +28,13 @@ def round_manager():
 
 def aggregate_parameters():
     global expected_clients
+    expected_clients = len(gv.client_list)
     with parameter_lock:
         if gv.post_num == expected_clients:
+            for status in gv.client_status.values():
+                if status != "Finish":
+                    # return "이전 라운드의 학습이 완료되지 않았습니다."
+                    return "The previous round's training is not complete."
             print("parameter aggregation start")
             gv.avg_weights = {}
             # tensorlist_float = [{key: value.float() for key, value in client_weights.items()} for client_weights in gv.parameters]

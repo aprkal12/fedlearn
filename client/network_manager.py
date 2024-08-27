@@ -14,17 +14,13 @@ class NetworkManager:
     def register_client(self, client_info):
         return requests.post(f"{self.server_url}/client", json=client_info, verify=False)
     
-    # 파일 크기 mb 변환
-    def bytes_to_mb(self, size_in_bytes):
-        return size_in_bytes / (1024 * 1024)
+    def set_uid(self, uid):
+        return requests.post(f"{self.server_url}/client/name", data=uid, verify=False)
 
     def send_params(self, params):
-        name, ip = utils.get_host()
+        # name = utils.get_hostname()
+        name = utils.get_name()
         
-        # comp_data = zstd.compress(pickle.dumps(params))
-        # size_existing_method = len(comp_data)
-        # print(f"기존 방식 데이터 크기: {self.bytes_to_mb(size_existing_method):.6f} MB")
-
         b64_data = base64.b64encode(params).decode('utf-8') # base64 방식
         data = {
             'client_name': name,
@@ -32,9 +28,6 @@ class NetworkManager:
             # 'params': comp_data.hex() # 16진법 방식
         }
 
-        # json_str = json.dumps(data)
-        # size_new_method = len(json_str.encode('utf-8'))
-        # print(f"새로운 방식 데이터 크기: {self.bytes_to_mb(size_new_method):.6f} MB")
         print("파라미터 전송")
         response = requests.post(f"{self.server_url}/parameter", json=data)
         return response.text
@@ -48,7 +41,8 @@ class NetworkManager:
             return None
     
     def post_params_signal(self, signal):
-        name = utils.get_hostname()
+        # name = utils.get_hostname()
+        name = utils.get_name()
         data = {'name' : name, 'signal' : signal}
         response = requests.post(f"{self.server_url}/parameter/signal", json=data)
         # print(response)

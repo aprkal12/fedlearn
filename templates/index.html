@@ -20,9 +20,15 @@
         <p>글로벌 모델 정확도: <span id="global-model-accuracy">0.0</span>%</p>
         <p>마지막 업데이트: <span id="last-updated">Never</span></p>
 
+        
+
         <h2>정확도 그래프</h2>
 
         <canvas id="accuracyChart" width="400" height="200"></canvas>
+
+        <label for="round-count">목표 라운드 입력 : </label>
+        <input type="number" id="round-count" min="1" value="1">
+        <button onclick="startAutoRun()">Auto Run</button>
 
         <button onclick="startClientTraining()">Train Clients</button>
         <button onclick="aggregateParameters()">Aggregate</button>
@@ -47,7 +53,7 @@
                 var clientList = document.getElementById('client_list');
                 clientList.innerHTML = '';
                 for (var client in data.clients) {
-                    console.log('Client:', client, 'IP:', data.clients[client]);
+                    console.log('Client:', client, 'ID:', data.clients[client]);
                     var li = document.createElement('li');
                     li.textContent = client + ' - ' + data.client_status[client];
                     clientList.appendChild(li);
@@ -132,6 +138,20 @@
                 location.reload();
             });
         });
+
+        function startAutoRun() {  // Auto Run
+            const roundCount = document.getElementById('round-count').value; // 라운드 수 가져오기
+            fetch(`/client/auto_run?rounds=${roundCount}`, {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Auto run started for ' + roundCount + ' rounds.');
+            })
+            .catch(error => {
+                alert('Error starting auto run: ' + error.message);
+            });
+        }
 
         function aggregateParameters() {
             fetch('/aggregate', {

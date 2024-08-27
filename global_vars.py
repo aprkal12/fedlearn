@@ -17,3 +17,7 @@ round_num = 0 # 현재 라운드
 global_model_accuracy = [] # 글로벌 모델 정확도
 
 client_status = {}
+
+train_mode = 'default' # 학습 모드
+
+auto_run_rounds = 1 # 자동 학습 라운드 수

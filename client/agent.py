@@ -1,4 +1,5 @@
 import sys
+import uuid
 from model_manager import ModelManager
 from network_manager import NetworkManager
 import utils
@@ -21,11 +22,20 @@ class ClientAgent:
     def on_connect(self):
         print("서버 연결")
         utils.set_host()
+        utils.set_id()
         name, ip = utils.get_host()
-        client_info = {"hostname": name, "ip": ip}
+        uid = utils.get_id()
+        # client_info = {"hostname": name, "id": uid}
+        client_info = {"id": uid}
         response = self.network_manager.register_client(client_info)
         
         self.params = self.model_manager.decompress_params(response.content)
+
+        response = self.network_manager.set_uid(uid)
+        name = response.content.decode('utf-8')
+
+        utils.set_name(name) # uid 기반으로 서버로부터 부여된 클라이언트 id (client1, client2 ...) 가져오기
+
         self.network_manager.post_params_signal("ready")
     
     def on_disconnect(self):
@@ -56,8 +66,8 @@ class ClientAgent:
     def send(self):
         updated_params = self.model_manager.extract_params()
         compressed_params = self.model_manager.compress_params(updated_params)
-        result = self.network_manager.send_params(compressed_params)
-        self.network_manager.post_params_signal("Finished sending parameters")
+        self.network_manager.send_params(compressed_params)
+        self.network_manager.post_params_signal("Finish")
 
     def start(self):
         self.connect_to_server()

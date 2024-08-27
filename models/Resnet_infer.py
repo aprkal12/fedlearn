@@ -19,8 +19,6 @@ from models.Resnet_setdata import SetData
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 class Inference():
     def __init__(self):
         self.model = None
@@ -39,11 +37,13 @@ class Inference():
         self.test_dl = None
         self.best_model_wts = None
         self.epoch = None
+        self.model_name = None
 
     def set_variable(self, data_size):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(self.device)
         self.model = resnet18().to(self.device)
+        self.model_name = 'resnet18'
         # self.model = resnet50().to(self.device)
 
         self.train_dl, self.val_dl, self.test_dl = SetData().run(data_size)
@@ -214,6 +214,14 @@ class Inference():
     
     def set_epoch(self, n):
         self.epoch = n
+    
+    def get_data_size(self):
+        data = {
+            'train': len(self.train_dl.dataset),
+            'val': len(self.val_dl.dataset),
+            'test': len(self.test_dl.dataset)
+        }
+        return data
     
     def run(self):
         self.params_train = {

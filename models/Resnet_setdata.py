@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torchvision import datasets
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, SubsetRandomSampler, Subset
+from torch.utils.data import DataLoader, Subset
 
 class SetData():
     def __init__(self):

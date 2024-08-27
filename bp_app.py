@@ -16,7 +16,7 @@ app.register_blueprint(client_bp)
 def handle_request_update():
     # print("web_reloading")
     round_num = gv.round_num
-    clients = gv.client_list
+    clients = gv.client_list # 클라이언트 리스트
     client_status = gv.client_status # 클라이언트 상태
     clients_num = len(clients)
 
