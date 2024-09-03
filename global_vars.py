@@ -10,7 +10,7 @@ avg_weights = None # 평균 파라미터
 
 parameters = {} # 클라이언트에서 받은 파라미터들
 
-socketio = SocketIO() # 소켓 객체
+socketio = SocketIO(ping_timeout=120) # 소켓 객체
 
 round_num = 0 # 현재 라운드
 
@@ -21,3 +21,13 @@ client_status = {}
 train_mode = 'default' # 학습 모드
 
 auto_run_rounds = 1 # 자동 학습 라운드 수
+
+auto_start_time = None # 자동 학습 시작 시간
+
+auto_end_time = None # 자동 학습 종료 시간
+
+best_acc = 0.0 # 최고 정확도
+
+best_round = 0 # 최고 정확도 라운드
+
+best_model_wts = None # 최고 정확도 모델 가중치

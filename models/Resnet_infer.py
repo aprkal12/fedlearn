@@ -38,6 +38,8 @@ class Inference():
         self.best_model_wts = None
         self.epoch = None
         self.model_name = None
+        self.loss_hist = None
+        self.metric_hist = None
 
     def set_variable(self, data_size):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -106,12 +108,13 @@ class Inference():
         opt=params["optimizer"]
         train_dl=params["train_dl"]
         val_dl=params["val_dl"]
+        test_dl=params["test_dl"]
         sanity_check=params["sanity_check"]
         lr_scheduler=params["lr_scheduler"]
         path2weights=params["path2weights"]
 
-        self.loss_hist = {'train': [], 'val': []}
-        self.metric_hist = {'train': [], 'val': []}
+        self.loss_hist = {'train': [], 'val': [], 'test': []}
+        self.metric_hist = {'train': [], 'val': [], 'test': []}
 
         best_loss = float('inf')
 
@@ -136,6 +139,12 @@ class Inference():
             self.loss_hist['val'].append(val_loss)
             self.metric_hist['val'].append(val_metric)
 
+            model.eval()
+            with torch.no_grad():
+                test_loss, test_metric = self.loss_epoch(model, loss_func, test_dl, sanity_check)
+            self.loss_hist['test'].append(test_loss)
+            self.metric_hist['test'].append(test_metric)
+
             if val_loss < best_loss:
                 early_stop = 0
                 best_loss = val_loss
@@ -146,7 +155,7 @@ class Inference():
             # lr_scheduler.step(val_loss)
 
             print("train loss: %.6f, val loss: %.6f, accuracy: %.2f %%, time: %.4f min" %(train_loss, val_loss, 100*val_metric, (time.time()-start_time)/60))
-            print('-'*10)
+            print(f"Test Loss: {test_loss:.6f}, Test Accuracy: {100*test_metric:.2f}%")
 
             # if early_stop > 20: # 얼리스탑 커맨드
             #     print("early stop!!!")
@@ -158,21 +167,26 @@ class Inference():
 
         return model, self.loss_hist, self.metric_hist
 
-    def test_model(self, model, test_dl):
-        model.eval()
-        with torch.no_grad():
-            test_loss, test_metric = self.loss_epoch(model, self.loss_func, test_dl)
-        return test_loss, test_metric
     
     def get_params_file(self):
         torch.save(self.parameter_extract(), 'models\\weights.pt')
         return 'models\\weights.pt'
     
-    def get_accuracy(self, model):
-        model.eval()
-        with torch.no_grad():
-            val_loss, val_metric = self.loss_epoch(model, self.params_train["loss_func"], self.params_train["val_dl"], self.params_train["sanity_check"])
-        return val_loss, val_metric
+    def get_accuracy(self, model, mode = 'None'):
+        if mode == 'train':
+            return self.loss_hist['train'][-1], self.metric_hist['train'][-1]
+        elif mode == 'val':
+            model.eval()
+            with torch.no_grad():
+                val_loss, val_metric = self.loss_epoch(model, self.loss_func, self.val_dl, False)
+            return val_loss, val_metric
+        elif mode == 'test':
+            model.eval()
+            with torch.no_grad():
+                test_loss, test_metric = self.loss_epoch(model, self.loss_func, self.test_dl, False)
+            return test_loss, test_metric
+        else:
+            return None
     
     def createFolder(self, directory):
         try:
@@ -230,6 +244,7 @@ class Inference():
             'loss_func': self.loss_func,
             'train_dl': self.train_dl,
             'val_dl': self.val_dl,
+            'test_dl': self.test_dl,
             'sanity_check': False,
             'lr_scheduler': self.lr_scheduler,
             'path2weights': './models/weights.pt',
@@ -238,8 +253,6 @@ class Inference():
 
         self.model, self.loss_hist, self.metric_hist = self.train_val(self.model, self.params_train)
 
-        test_loss, test_metric = self.test_model(self.model, self.test_dl)
-        print(f"Test Loss: {test_loss:.6f}, Test Accuracy: {100*test_metric:.2f}%")
         
         # self.fill_graph()  # 학습 및 검증 결과 그래프 출력
 

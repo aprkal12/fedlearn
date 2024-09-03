@@ -1,11 +1,16 @@
+import os
 import pickle
-from Resnet_infer import Inference
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from models.Resnet_infer import Inference
 import zstd
 
 class ModelManager:
     def __init__(self):
         self.model = Inference()
-        self.model.set_variable(0.5)
+        self.model.set_variable(1)
         self.model.set_epoch(2)
     
     def set_epoch(self, n):

@@ -1,5 +1,9 @@
+import os
 import sys
 import uuid
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from model_manager import ModelManager
 from network_manager import NetworkManager
 import utils
@@ -33,7 +37,6 @@ class ClientAgent:
 
         response = self.network_manager.set_uid(uid)
         name = response.content.decode('utf-8')
-
         utils.set_name(name) # uid 기반으로 서버로부터 부여된 클라이언트 id (client1, client2 ...) 가져오기
 
         self.network_manager.post_params_signal("ready")

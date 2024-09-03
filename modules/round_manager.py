@@ -5,6 +5,7 @@ import threading
 import torch
 from models.Resnet_infer import Inference
 import global_vars as gv
+import wandb
 
 parameter_lock = threading.Lock()
 expected_clients = len(gv.client_list)
@@ -14,15 +15,15 @@ def round_manager():
     msg = aggregate_parameters()
     if msg == "aggregated": 
         # gv.round_num += 1
-        gv.socketio.emit('aggregated_params')
-        # gv.socketio.emit('update_status', {'name': gv.client_list, 'signal': 'waiting'})
         notify_clients()
         global_model_update()
+
         print("round %d complete" % gv.round_num)
         print("="*10)
         print()
         print("next round setting...")
         next_round_set()
+        gv.socketio.emit('aggregated_params')
     return msg
 
 
@@ -57,9 +58,20 @@ def next_round_set():
     gv.parameters.clear()
     gv.post_num = 0
     
-
 def global_model_update():
     gv.model.load_parameter(gv.avg_weights)
-    val_loss, val_metric = gv.model.get_accuracy(gv.model.model)
+    # train_loss, train_metric = gv.model.get_accuracy('train')
+    # test_loss, test_metric = gv.model.get_accuracy(gv.model.model, 'test')
+    val_loss, val_metric = gv.model.get_accuracy(gv.model.model, 'val')
+
+    # print("wandb logging...")
+    # wandb.log({"test_loss" : test_loss, "test_acc" : test_metric, "val_loss" : val_loss, "val_acc" : val_metric})
+
     print("global model val loss: %.6f, accuracy: %.2f %%" %(val_loss, 100*val_metric))
     gv.global_model_accuracy.append(100*val_metric)
+
+    if 100*val_metric > gv.best_acc:
+        gv.best_acc = 100*val_metric
+        gv.best_model_wts = gv.avg_weights
+        gv.best_round = gv.round_num
+        print("best model updated")
