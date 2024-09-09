@@ -1,5 +1,6 @@
 import os
 import pickle
+import random
 import numpy as np
 import torch
 from torchvision import datasets
@@ -80,6 +81,103 @@ class SetData():
                 pickle.dump(client_test_dataset, f)
 
         print(f"Client data saved to {self.client_data_dir}")
+    
+    def split_non_iid_imbalanced_data(self, num_clients, data_size):
+        self.client_data_dir = './client_data_non_iid_imbalanced'
+        if not os.path.exists(self.client_data_dir):
+            os.makedirs(self.client_data_dir)
+
+        # 데이터 다운로드 및 준비
+        train_dataset = datasets.CIFAR10(self.data_path, train=True, transform=transforms.ToTensor(), download=True)
+        test_dataset = datasets.CIFAR10(self.data_path, train=False, transform=transforms.ToTensor(), download=True)
+
+        total_train_size = int(len(train_dataset) * data_size)
+        indices = list(range(total_train_size))
+        np.random.shuffle(indices)
+
+        # 각 클래스별 데이터셋 분리
+        class_data = {i: [] for i in range(10)}
+        for idx in indices:
+            _, label = train_dataset[idx]
+            class_data[label].append(idx)
+
+        # 클라이언트별 데이터셋 초기화
+        client_train_data = {i: [] for i in range(num_clients)}
+        client_val_data = {i: [] for i in range(num_clients)}
+        client_test_data = {i: [] for i in range(num_clients)}
+
+        # 각 클래스별로 데이터 분배
+        for class_id, class_list in class_data.items():
+            num_samples = len(class_list)
+            random.shuffle(class_list)
+
+            # 데이터 나누기
+            for i in range(num_clients):
+                num_client_samples = num_samples // num_clients
+                start_idx = i * num_client_samples
+                end_idx = (i + 1) * num_client_samples if i != num_clients - 1 else num_samples
+                client_data = class_list[start_idx:end_idx]
+
+                # 데이터 추가
+                client_train_data[i].extend(client_data[:int(len(client_data) * 0.8)])
+                client_val_data[i].extend(client_data[int(len(client_data) * 0.8):int(len(client_data) * 0.9)])
+                client_test_data[i].extend(client_data[int(len(client_data) * 0.9):])
+
+        # 데이터 파일로 저장
+        for i in range(num_clients):
+            with open(os.path.join(self.client_data_dir, f'client_{i}_train_data_non_iid_imbalanced.pkl'), 'wb') as f:
+                pickle.dump(Subset(train_dataset, client_train_data[i]), f)
+            with open(os.path.join(self.client_data_dir, f'client_{i}_val_data_non_iid_imbalanced.pkl'), 'wb') as f:
+                pickle.dump(Subset(train_dataset, client_val_data[i]), f)
+            with open(os.path.join(self.client_data_dir, f'client_{i}_test_data_non_iid_imbalanced.pkl'), 'wb') as f:
+                pickle.dump(Subset(test_dataset, client_test_data[i]), f)
+
+        print(f"Client data saved to {self.client_data_dir}")
+
+    def check_imbalanced_data_distribution(self, num_clients):
+        self.client_data_dir = './client_data_non_iid_imbalanced'
+        for client_id in range(num_clients):
+            print(f"\nClient {client_id} data distribution:")
+
+            # Train 데이터 분포 확인
+            with open(os.path.join(self.client_data_dir, f'client_{client_id}_train_data_non_iid_imbalanced.pkl'), 'rb') as f:
+                client_train_data = pickle.load(f)
+            train_class_counts = [0] * 10
+            for _, label in client_train_data:
+                train_class_counts[label] += 1
+            print(f"  Train class distribution: {train_class_counts}")
+
+            # Validation 데이터 분포 확인
+            with open(os.path.join(self.client_data_dir, f'client_{client_id}_val_data_non_iid_imbalanced.pkl'), 'rb') as f:
+                client_val_data = pickle.load(f)
+            val_class_counts = [0] * 10
+            for _, label in client_val_data:
+                val_class_counts[label] += 1
+            print(f"  Validation class distribution: {val_class_counts}")
+
+            # Test 데이터 분포 확인
+            with open(os.path.join(self.client_data_dir, f'client_{client_id}_test_data_non_iid_imbalanced.pkl'), 'rb') as f:
+                client_test_data = pickle.load(f)
+            test_class_counts = [0] * 10
+            for _, label in client_test_data:
+                test_class_counts[label] += 1
+            print(f"  Test class distribution: {test_class_counts}")
+
+
+    def load_non_iid_client_data(client_id):
+        data_dir = './client_data_non_iid_imbalanced'
+        
+        with open(os.path.join(data_dir, f'client_{client_id}_train_data.pkl'), 'rb') as f:
+            train_data = pickle.load(f)
+        
+        with open(os.path.join(data_dir, f'client_{client_id}_val_data.pkl'), 'rb') as f:
+            val_data = pickle.load(f)
+        
+        with open(os.path.join(data_dir, f'client_{client_id}_test_data.pkl'), 'rb') as f:
+            test_data = pickle.load(f)
+
+        return train_data, val_data, test_data
+
 
     def load_client_data(self, client_id):
         train_file = os.path.join(self.client_data_dir, f'0.5_client_{client_id}_train_data.pkl')

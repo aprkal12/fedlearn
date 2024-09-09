@@ -5,18 +5,19 @@ import json
 import os
 from flask import current_app, request, g
 import wandb
-from . import parameter_bp
+from . import transmitter_bp
 import zstd
 import pickle
 import threading
 import global_vars as gv
 
-from modules.round_manager import round_manager
+from modules.global_model_manager import round_manager
+from modules.client_manager import send_reload_signal, update_status, send_training_signal
 
-parameter_lock = threading.Lock()
+transmitter_lock = threading.Lock()
 
-@parameter_bp.route('/parameter', methods=['POST', 'GET'])
-def handle_parameters():
+@transmitter_bp.route('/transmitter', methods=['POST', 'GET'])
+def handle_parameter():
 
     if request.method == 'POST':  # 클라이언트로부터 파라미터 수신
         data = request.json
@@ -27,7 +28,7 @@ def handle_parameters():
         # comp_data = request.data
         decomp_data = zstd.decompress(comp_data)
         client_params = pickle.loads(decomp_data)
-        with parameter_lock:
+        with transmitter_lock:
             gv.parameters[client_name] = client_params
             gv.post_num += 1
 
@@ -41,7 +42,7 @@ def handle_parameters():
         comp_data = zstd.compress(binary_data)
         return comp_data
 
-@parameter_bp.route('/parameter/signal', methods=['POST'])
+@transmitter_bp.route('/transmitter/signal', methods=['POST'])
 def signal():
     data = request.json
     name = data['name']
@@ -50,8 +51,10 @@ def signal():
     print(f"signal received -> {name} : {signal}")
 
     gv.client_status[name] = signal
-    gv.socketio.emit('update_status', {'name': name, 'signal': signal})
-    gv.socketio.emit('reload')
+    update_status(name, signal)
+    send_reload_signal()
+    # gv.socketio.emit('update_status', {'name': name, 'signal': signal})
+    # gv.socketio.emit('reload')
 
     if gv.train_mode == 'auto':
         if len(gv.global_model_accuracy) == gv.auto_run_rounds: 
@@ -77,7 +80,8 @@ def signal():
         elif all_clients_same_signal(signal):
             if signal == 'ready':
                 gv.round_num += 1
-                gv.socketio.emit('training')
+                # gv.socketio.emit('training')
+                send_training_signal()
                 print()
                 print("="*10)
                 print(f"round {gv.round_num} start")
@@ -117,7 +121,7 @@ def save_experiment_results_csv(client_count, round_accuracies, experiment_metad
     """
     실험 결과를 CSV 파일로 저장하는 함수.
 
-    Parameters:
+    parameter:
     - client_count: 참여 클라이언트 수
     - round_accuracies: 라운드 별 글로벌 모델 정확도 리스트
     - experiment_metadata: 실험 환경에 대한 메타데이터 (예: 학습률, 에포크 수 등)

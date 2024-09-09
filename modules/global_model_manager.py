@@ -7,6 +7,8 @@ from models.Resnet_infer import Inference
 import global_vars as gv
 import wandb
 
+from modules.client_manager import send_reload_signal, send_aggregated_signal
+
 parameter_lock = threading.Lock()
 expected_clients = len(gv.client_list)
 
@@ -15,7 +17,7 @@ def round_manager():
     msg = aggregate_parameters()
     if msg == "aggregated": 
         # gv.round_num += 1
-        notify_clients()
+        send_reload_signal()
         global_model_update()
 
         print("round %d complete" % gv.round_num)
@@ -23,7 +25,8 @@ def round_manager():
         print()
         print("next round setting...")
         next_round_set()
-        gv.socketio.emit('aggregated_params')
+        # gv.socketio.emit('aggregated_params')
+        send_aggregated_signal()
     return msg
 
 
@@ -51,8 +54,8 @@ def aggregate_parameters():
             print("집계 조건 충족 안됨")
     return "All parameters have not been received yet."
 
-def notify_clients():
-    gv.socketio.emit('reload')
+# def notify_clients():
+#     gv.socketio.emit('reload')
 
 def next_round_set():
     gv.parameters.clear()

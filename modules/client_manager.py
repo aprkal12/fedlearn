@@ -17,7 +17,8 @@ def register_client():
 
         gv.client_list[client_id] = client_name
         print("client registered")
-        gv.socketio.emit('reload')
+        # gv.socketio.emit('reload')
+        send_reload_signal()
         
         params = gv.model.parameter_extract()
         binary_data = pickle.dumps(params)
@@ -37,7 +38,8 @@ def training():
             break
 
     if count == start:
-        gv.socketio.emit('training')
+        # gv.socketio.emit('training')
+        send_training_signal()
         gv.round_num += 1
         print()
         print("="*10)
@@ -56,7 +58,8 @@ def auto_run():
     print("auto run start")
     print("goal rounds: ", gv.auto_run_rounds)
     if gv.round_num == 0:
-        gv.socketio.emit('training')
+        # gv.socketio.emit('training')
+        send_training_signal()
         gv.round_num += 1
         print()
         print("="*10)
@@ -70,3 +73,20 @@ def get_name():
     name = [k for k, v in gv.client_list.items() if v == data][0]
     return name
 
+
+### 소켓 통신 담당 ###
+def send_aggregated_signal():
+    gv.socketio.emit('aggregated_params')
+
+def send_reload_signal():
+    gv.socketio.emit('reload')
+
+def update_status(name, signal):
+    gv.client_status[name] = signal
+    gv.socketio.emit('update_status', {'name': name, 'signal': signal})
+
+def send_training_signal():
+    gv.socketio.emit('training')
+
+def update_data(data):
+    gv.socketio.emit('update_data', data)

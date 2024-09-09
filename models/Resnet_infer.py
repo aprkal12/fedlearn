@@ -13,13 +13,13 @@ import numpy as np
 import time
 import copy
 
-# from models.Resnet_blocks import BasicBlock
-# from models.Resnet_mainblock import ResNet, resnet18, resnet50
-# from models.Resnet_setdata import SetData
+from models.Resnet_blocks import BasicBlock
+from models.Resnet_mainblock import ResNet, resnet18, resnet50
+from models.Resnet_setdata import SetData
 
-from Resnet_blocks import BasicBlock
-from Resnet_mainblock import ResNet, resnet18, resnet50
-from Resnet_setdata import SetData
+# from Resnet_blocks import BasicBlock
+# from Resnet_mainblock import ResNet, resnet18, resnet50
+# from Resnet_setdata import SetData
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -45,8 +45,14 @@ class Inference():
         self.loss_hist = None
         self.metric_hist = None
 
+    def split_non_iid_data(self, num_clients, data_size):
+        SetData().split_non_iid_imbalanced_data(num_clients, data_size)
+
     def split_client_data(self, num_clients, data_size):
         SetData().split_client_data(num_clients, data_size)
+    
+    def check_data(self, num_clients):
+        SetData().check_imbalanced_data_distribution(num_clients)
 
     def set_variable(self, data_size=None, client_id=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

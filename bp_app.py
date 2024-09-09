@@ -1,15 +1,17 @@
 from flask import Flask, current_app, render_template, g
 from flask_socketio import SocketIO
-from modules import parameter_bp, aggregate_bp, client_bp
+from modules import transmitter_bp, aggregate_bp, client_bp
 from models.Resnet_infer import Inference
 import global_vars as gv
 import datetime
 import wandb
 
+from modules.client_manager import update_data
+
 app = Flask(__name__)
 gv.socketio = SocketIO(app)
 
-app.register_blueprint(parameter_bp)
+app.register_blueprint(transmitter_bp)
 app.register_blueprint(aggregate_bp)
 app.register_blueprint(client_bp)
 
@@ -58,7 +60,8 @@ def handle_request_update():
         'accuracy_history': gv.global_model_accuracy,  # 정확도 히스토리
         'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    gv.socketio.emit('update_data', data)
+    # gv.socketio.emit('update_data', data)
+    update_data(data)
 
 @app.route('/')
 def mainpage():
@@ -67,13 +70,15 @@ def mainpage():
 if __name__ == '__main__':
     gv.model = Inference()
     # gv.model.split_client_data(num_clients=2, data_size=1.0)
-    gv.model.set_variable(0.5)
-    gv.model.set_epoch(1)
-    gv.model.run()
-    print("="*10)
-    print("Start server")
-    print("Model training complete")
-    datas = gv.model.parameter_extract()  # 모델에서 파라미터 추출
-    print("First params extracted")
-    print("Server ready")
-    gv.socketio.run(app, host='0.0.0.0', port=11110)
+    gv.model.split_non_iid_data(num_clients=5, data_size=1.0)
+    gv.model.check_data(num_clients=5)
+    # gv.model.set_variable(0.5)
+    # gv.model.set_epoch(1)
+    # gv.model.run()
+    # print("="*10)
+    # print("Start server")
+    # print("Model training complete")
+    # datas = gv.model.parameter_extract()  # 모델에서 파라미터 추출
+    # print("First params extracted")
+    # print("Server ready")
+    # gv.socketio.run(app, host='0.0.0.0', port=11110)
