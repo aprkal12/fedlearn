@@ -66,7 +66,8 @@ def mainpage():
 
 if __name__ == '__main__':
     gv.model = Inference()
-    gv.model.set_variable(1)
+    # gv.model.split_client_data(num_clients=2, data_size=1.0)
+    gv.model.set_variable(0.5)
     gv.model.set_epoch(1)
     gv.model.run()
     print("="*10)

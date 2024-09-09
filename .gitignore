@@ -8,6 +8,7 @@ wandb/
 *.tar.gz
 *.pt
 cifar-10-batches-py/
+client_data/
 
 ### Flask ###
 instance/*

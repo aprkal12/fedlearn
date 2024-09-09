@@ -1,4 +1,5 @@
 import os
+import pickle
 import numpy as np
 import torch
 from torchvision import datasets
@@ -8,6 +9,7 @@ from torch.utils.data import DataLoader, Subset
 class SetData():
     def __init__(self):
         self.data_path = './data'
+        self.client_data_dir = './client_data'
         self.train_ds = None
         self.val_ds = None
         self.test_ds = None
@@ -24,6 +26,82 @@ class SetData():
         self.val_dl = None
         self.test_dl = None
     
+    def split_client_data(self, num_clients, data_size):
+        self.client_data_dir = './client_data'
+        if not os.path.exists(self.client_data_dir):
+            os.makedirs(self.client_data_dir)
+
+        # 데이터 다운로드 및 준비
+        train_dataset = datasets.CIFAR10(self.data_path, train=True, transform=transforms.ToTensor(), download=True)
+        test_dataset = datasets.CIFAR10(self.data_path, train=False, transform=transforms.ToTensor(), download=True)
+        
+        total_train_size = int(len(train_dataset) * data_size)
+        indices = list(range(total_train_size))
+        np.random.shuffle(indices)
+
+        # Validation/Test 데이터셋을 위한 인덱스 설정
+        val_test_data_size = min(10000, int(total_train_size * 0.2))
+        val_test_indices = list(range(val_test_data_size))
+        np.random.shuffle(val_test_indices)
+        val_size = len(val_test_indices) // 2
+        test_size = len(val_test_indices) - val_size
+        val_indices = val_test_indices[:val_size]
+        test_indices = val_test_indices[val_size:]
+
+        # 클라이언트별 데이터셋 나누기
+        client_train_data_size = total_train_size // num_clients
+        client_val_size = val_size // num_clients
+        client_test_size = test_size // num_clients
+
+        for i in range(num_clients):
+            # Train 데이터 나누기
+            start_idx = i * client_train_data_size
+            end_idx = (i + 1) * client_train_data_size if i != num_clients - 1 else total_train_size
+            client_train_indices = indices[start_idx:end_idx]
+            client_train_dataset = Subset(train_dataset, client_train_indices)
+            
+            # Validation/Test 데이터 나누기
+            start_val_idx = i * client_val_size
+            end_val_idx = (i + 1) * client_val_size if i != num_clients - 1 else val_size
+            client_val_indices = val_indices[start_val_idx:end_val_idx]
+            client_val_dataset = Subset(test_dataset, client_val_indices)
+
+            start_test_idx = i * client_test_size
+            end_test_idx = (i + 1) * client_test_size if i != num_clients - 1 else test_size
+            client_test_indices = test_indices[start_test_idx:end_test_idx]
+            client_test_dataset = Subset(test_dataset, client_test_indices)
+
+            # 데이터 파일로 저장
+            with open(os.path.join(self.client_data_dir, f'0.5_client_{i}_train_data.pkl'), 'wb') as f:
+                pickle.dump(client_train_dataset, f)
+            with open(os.path.join(self.client_data_dir, f'0.5_client_{i}_val_data.pkl'), 'wb') as f:
+                pickle.dump(client_val_dataset, f)
+            with open(os.path.join(self.client_data_dir, f'0.5_client_{i}_test_data.pkl'), 'wb') as f:
+                pickle.dump(client_test_dataset, f)
+
+        print(f"Client data saved to {self.client_data_dir}")
+
+    def load_client_data(self, client_id):
+        train_file = os.path.join(self.client_data_dir, f'0.5_client_{client_id}_train_data.pkl')
+        val_file = os.path.join(self.client_data_dir, f'0.5_client_{client_id}_val_data.pkl')
+        test_file = os.path.join(self.client_data_dir, f'0.5_client_{client_id}_test_data.pkl')
+
+        with open(train_file, 'rb') as f:
+            self.train_ds = pickle.load(f)
+        with open(val_file, 'rb') as f:
+            self.val_ds = pickle.load(f)
+        with open(test_file, 'rb') as f:
+            self.test_ds = pickle.load(f)
+
+        print("client_id:", client_id)
+        print("Train set size:", len(self.train_ds))
+        print("Validation set size:", len(self.val_ds))
+        print("Test set size:", len(self.test_ds))
+
+        print("Client data loaded")
+    # # 예제 사용법
+    # save_client_data('data', num_clients=5, data_size=1.0, self.client_data_dir='client_data')
+
     def download_data(self, data_size):
         if not os.path.exists(self.data_path):
             os.mkdir(self.data_path)
@@ -115,6 +193,12 @@ class SetData():
         self.train_dl = DataLoader(self.train_ds, batch_size=32, shuffle=True)
         self.val_dl = DataLoader(self.val_ds, batch_size=32, shuffle=False)
         self.test_dl = DataLoader(self.test_ds, batch_size=32, shuffle=False)
+    
+    def client_run(self, client_id):
+        self.load_client_data(client_id)
+        self.normalize_data()
+        self.set_transformation()
+        return self.train_dl, self.val_dl, self.test_dl
     
     def run(self, data_size):
         self.download_data(data_size)

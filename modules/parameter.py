@@ -64,7 +64,7 @@ def signal():
             metadata = {
                 "Client Count": len(gv.client_list),
                 "Auto Run Rounds": gv.auto_run_rounds,
-                "Clients Epochs(round)": 2,
+                "Clients Epochs(round)": 5,
                 "model": gv.model.model_name,
                 "Dataset": "CIFAR-10",
                 "Data Size": gv.model.get_data_size(),

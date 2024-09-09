@@ -13,9 +13,13 @@ import numpy as np
 import time
 import copy
 
-from models.Resnet_blocks import BasicBlock
-from models.Resnet_mainblock import ResNet, resnet18, resnet50
-from models.Resnet_setdata import SetData
+# from models.Resnet_blocks import BasicBlock
+# from models.Resnet_mainblock import ResNet, resnet18, resnet50
+# from models.Resnet_setdata import SetData
+
+from Resnet_blocks import BasicBlock
+from Resnet_mainblock import ResNet, resnet18, resnet50
+from Resnet_setdata import SetData
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -41,14 +45,20 @@ class Inference():
         self.loss_hist = None
         self.metric_hist = None
 
-    def set_variable(self, data_size):
+    def split_client_data(self, num_clients, data_size):
+        SetData().split_client_data(num_clients, data_size)
+
+    def set_variable(self, data_size=None, client_id=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(self.device)
         self.model = resnet18().to(self.device)
         self.model_name = 'resnet18'
         # self.model = resnet50().to(self.device)
 
-        self.train_dl, self.val_dl, self.test_dl = SetData().run(data_size)
+        if client_id is not None:
+            self.train_dl, self.val_dl, self.test_dl = SetData().client_run(client_id)
+        else:
+            self.train_dl, self.val_dl, self.test_dl = SetData().run(data_size)
         self.loss_func = nn.CrossEntropyLoss(reduction='sum')
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
         # self.lr_scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=10)
@@ -157,10 +167,10 @@ class Inference():
             print("train loss: %.6f, val loss: %.6f, accuracy: %.2f %%, time: %.4f min" %(train_loss, val_loss, 100*val_metric, (time.time()-start_time)/60))
             print(f"Test Loss: {test_loss:.6f}, Test Accuracy: {100*test_metric:.2f}%")
 
-            # if early_stop > 20: # 얼리스탑 커맨드
-            #     print("early stop!!!")
-            #     print('-'*10)
-            #     break
+            if early_stop > 20: # 얼리스탑 커맨드
+                print("early stop!!!")
+                print('-'*10)
+                break
 
         print("best epoch : ", best_epoch)
         self.early_stop_epoch = epoch + 1  # Update early stop epoch
@@ -254,11 +264,11 @@ class Inference():
         self.model, self.loss_hist, self.metric_hist = self.train_val(self.model, self.params_train)
 
         
-        # self.fill_graph()  # 학습 및 검증 결과 그래프 출력
+        self.fill_graph()  # 학습 및 검증 결과 그래프 출력
 
 if __name__ == '__main__':
     infer = Inference()
-    infer.set_variable(1) # 사용할 데이터 사이즈 (0 ~ 1) 비율로 설정
+    infer.set_variable(0.5) # 사용할 데이터 사이즈 (0 ~ 1) 비율로 설정
     infer.set_epoch(50)
     # summary(infer.model, (3, 32, 32))
     # print(infer.parameter_extract())
