@@ -45,24 +45,34 @@ class Inference():
         self.loss_hist = None
         self.metric_hist = None
 
-    def split_non_iid_data(self, num_clients, data_size):
-        SetData().split_non_iid_imbalanced_data(num_clients, data_size)
-
-    def split_client_data(self, num_clients, data_size):
-        SetData().split_client_data(num_clients, data_size)
+    # def split_non_iid_data(self, num_clients, data_size):
+    #     SetData().split_non_iid_imbalanced_data(num_clients, data_size)
     
-    def check_data(self, num_clients):
-        SetData().check_imbalanced_data_distribution(num_clients)
+    # def split_non_iid_data100(self, num_clients, data_size):
+    #     SetData().split_non_iid_100(num_clients, data_size)
 
-    def set_variable(self, data_size=None, client_id=None):
+    # def split_client_data(self, num_clients, data_size):
+    #     SetData().split_client_data(num_clients, data_size)
+    
+    # def check_data(self, num_clients):
+    #     SetData().check_imbalanced_data_distribution(num_clients)
+    
+    # def check_cifar100_data(self, num_clients):
+    #     SetData().check_imbalanced_data_100(num_clients)
+
+    def set_variable(self, data_size=None, client_id=None, non_iid_set=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(self.device)
         self.model = resnet18().to(self.device)
         self.model_name = 'resnet18'
         # self.model = resnet50().to(self.device)
 
-        if client_id is not None:
+        if client_id is not None and non_iid_set is None:
             self.train_dl, self.val_dl, self.test_dl = SetData().client_run(client_id)
+        elif client_id is not None and non_iid_set is not None:
+            self.train_dl, self.val_dl, self.test_dl = SetData().non_iid_client_run(client_id)
+        elif non_iid_set is not None:
+            self.train_dl, self.val_dl, self.test_dl = SetData().run100(data_size)
         else:
             self.train_dl, self.val_dl, self.test_dl = SetData().run(data_size)
         self.loss_func = nn.CrossEntropyLoss(reduction='sum')
@@ -270,11 +280,11 @@ class Inference():
         self.model, self.loss_hist, self.metric_hist = self.train_val(self.model, self.params_train)
 
         
-        self.fill_graph()  # 학습 및 검증 결과 그래프 출력
+        # self.fill_graph()  # 학습 및 검증 결과 그래프 출력
 
 if __name__ == '__main__':
     infer = Inference()
-    infer.set_variable(0.5) # 사용할 데이터 사이즈 (0 ~ 1) 비율로 설정
+    infer.set_variable(1) # 사용할 데이터 사이즈 (0 ~ 1) 비율로 설정
     infer.set_epoch(50)
     # summary(infer.model, (3, 32, 32))
     # print(infer.parameter_extract())

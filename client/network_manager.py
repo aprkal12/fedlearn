@@ -29,11 +29,11 @@ class NetworkManager:
         }
 
         print("파라미터 전송")
-        response = requests.post(f"{self.server_url}/parameter", json=data)
+        response = requests.post(f"{self.server_url}/transmitter", json=data)
         return response.text
     
     def fetch_aggregated_params(self):
-        response = requests.get(f"{self.server_url}/parameter")
+        response = requests.get(f"{self.server_url}/transmitter")
         if response.status_code == 200:
             return response.content
         else:
@@ -44,7 +44,7 @@ class NetworkManager:
         # name = utils.get_hostname()
         name = utils.get_name()
         data = {'name' : name, 'signal' : signal}
-        response = requests.post(f"{self.server_url}/parameter/signal", json=data)
+        response = requests.post(f"{self.server_url}/transmitter/signal", json=data)
         # print(response)
     
     def connect_socket(self, on_connect, on_disconnect, on_aggregated_params, on_train):

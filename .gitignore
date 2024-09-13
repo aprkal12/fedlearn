@@ -10,6 +10,9 @@ wandb/
 cifar-10-batches-py/
 client_data/
 client_data_non_iid_imbalanced/
+client_data_custom_distribution/
+cifar100_non_iid/
+data
 
 ### Flask ###
 instance/*

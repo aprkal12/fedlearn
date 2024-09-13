@@ -67,7 +67,7 @@ def signal():
             metadata = {
                 "Client Count": len(gv.client_list),
                 "Auto Run Rounds": gv.auto_run_rounds,
-                "Clients Epochs(round)": 5,
+                "Clients Epochs(round)": 2,
                 "model": gv.model.model_name,
                 "Dataset": "CIFAR-10",
                 "Data Size": gv.model.get_data_size(),
@@ -134,7 +134,7 @@ def save_experiment_results_csv(client_count, round_accuracies, experiment_metad
 
     # 디렉토리의 파일 개수를 확인하여 새로운 파일 이름 생성
     file_count = len([f for f in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, f))])
-    new_file_name = f"experiment_results_{file_count + 1}.csv"
+    new_file_name = f"non_iid_experiment_results_{file_count + 1}.csv"
 
     # CSV 파일로 저장
     output_file = os.path.join(output_dir, new_file_name)

@@ -6,7 +6,7 @@ import torch.nn as nn
 from models.Resnet_blocks import BasicBlock, BottleNeck
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_block, num_classes=10, init_weights=True):
+    def __init__(self, block, num_block, num_classes=100, init_weights=True):
         super().__init__()
 
         self.in_channels=64
