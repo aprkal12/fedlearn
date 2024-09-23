@@ -1,5 +1,6 @@
 from flask import Flask, current_app, render_template, g
 from flask_socketio import SocketIO
+from models.Resnet_setdata import DataManager
 from modules import transmitter_bp, aggregate_bp, client_bp
 from models.Resnet_infer import Inference
 import global_vars as gv
@@ -69,9 +70,8 @@ def mainpage():
 
 if __name__ == '__main__':
     gv.model = Inference()
-    # gv.model.split_client_data(num_clients=2, data_size=1.0)
-    # gv.model.split_non_iid_data100(num_clients=5, data_size=1.0)
-    # gv.model.check_cifar100_data(num_clients=5)
+    # data_manager = DataManager()
+    # data_manager.split_data(num_clients=5, data_size=1.0, iid=False)
     gv.model.set_variable(0.2)
     gv.model.set_epoch(1)
     gv.model.run()

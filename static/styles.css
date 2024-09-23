@@ -1,74 +1,139 @@
+/* 전체 화면에서 중앙 정렬 및 기본 레이아웃 설정 */
 body {
     font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #f4f4f4;
     margin: 0;
+    padding: 20px;  /* 위아래 여백 감소 */
 }
 
+/* 메인 컨테이너 */
 .container {
     background-color: #ffffff;
     border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    max-width: 400px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    max-width: 1200px;
     width: 100%;
-    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 10px;  /* 요소 간의 간격을 줄임 */
 }
 
+/* 제목 */
 h1 {
-    font-size: 1.5em;
-    margin-bottom: 20px;
-}
-
-h2 {
-    font-size: 1.2em;
+    text-align: center;
     margin-bottom: 10px;
-    color: #333;
+    font-size: 1.5em;  /* 제목 크기 축소 */
 }
 
-p, ul {
-    margin: 10px 0;
-    color: #555;
-    text-align: left;
+/* 가로 배치된 클라이언트와 글로벌 상태 */
+.top-section {
+    display: flex;
+    justify-content: space-between;
     width: 100%;
+    gap: 10px;
 }
 
-ul {
-    list-style-type: none;
-    padding: 0;
-    text-align: left;
+.card {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    flex: 1;
+    text-align: center;
+    font-size: 0.85em;  /* 카드 내부 폰트 크기 축소 */
 }
 
-ul li {
-    padding: 5px 0;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
+/* 그래프 섹션 */
+.graph-section {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+/* 목표 라운드 입력 및 버튼 섹션 */
+.bottom-section {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* autorun 섹션 */
+.round-section {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    width: 30%;
+    text-align: center;
+}
+
+/* autorun 타이틀 스타일 */
+.round-section h2 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+/* 목표 라운드 입력 필드 */
+input[type="number"] {
+    padding: 5px;
+    margin-top: 5px;
+    width: 100%;
+    max-width: 150px;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 0.85em;
+}
+
+.round-buttons {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-around;
+    gap: 5px;
 }
 
 button {
     background-color: #007BFF;
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 5px 15px;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: 15px;
-    transition: background-color 0.3s;
-    width: 100%;  /* 버튼을 전체 너비로 확장 */
-    max-width: 200px;  /* 버튼의 최대 너비 설정 */
+    font-size: 0.85em;
+    width: 100%;
+    max-width: 120px;
 }
 
 button:hover {
     background-color: #0056b3;
 }
 
-.status-span {
-    font-weight: bold;
-    color: #007BFF;
+/* 버튼 섹션 */
+.buttons-container {
+    display: flex;
+    justify-content: space-around;
+    width: 30%;
+    gap: 10px;
 }
+
+button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85em;
+    width: 100%;
+   

@@ -15,11 +15,11 @@ import copy
 
 from models.Resnet_blocks import BasicBlock
 from models.Resnet_mainblock import ResNet, resnet18, resnet50
-from models.Resnet_setdata import SetData
+from models.Resnet_setdata import DataManager
 
 # from Resnet_blocks import BasicBlock
 # from Resnet_mainblock import ResNet, resnet18, resnet50
-# from Resnet_setdata import SetData
+# from Resnet_setdata import DataManager
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -67,14 +67,22 @@ class Inference():
         self.model_name = 'resnet18'
         # self.model = resnet50().to(self.device)
 
+        data_manager = DataManager()
+
         if client_id is not None and non_iid_set is None:
-            self.train_dl, self.val_dl, self.test_dl = SetData().client_run(client_id)
+            # IID 클라이언트 데이터 로드
+            self.train_dl, self.val_dl, self.test_dl = data_manager.client_run(client_id)
         elif client_id is not None and non_iid_set is not None:
-            self.train_dl, self.val_dl, self.test_dl = SetData().non_iid_client_run(client_id)
+            # Non-IID 클라이언트 데이터 로드
+            self.train_dl, self.val_dl, self.test_dl = data_manager.non_iid_client_run(client_id)
         elif non_iid_set is not None:
-            self.train_dl, self.val_dl, self.test_dl = SetData().run100(data_size)
+            # IID CIFAR-100 데이터 로드
+            data_manager.dataset_name = 'CIFAR100'
+            self.train_dl, self.val_dl, self.test_dl = data_manager.run(data_size)
         else:
-            self.train_dl, self.val_dl, self.test_dl = SetData().run(data_size)
+            # IID CIFAR-10 데이터 로드
+            self.train_dl, self.val_dl, self.test_dl = data_manager.run(data_size)
+
         self.loss_func = nn.CrossEntropyLoss(reduction='sum')
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
         # self.lr_scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=10)

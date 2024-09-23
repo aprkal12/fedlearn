@@ -12,6 +12,8 @@ client_data/
 client_data_non_iid_imbalanced/
 client_data_custom_distribution/
 cifar100_non_iid/
+for_client_data/
+for_client_data_pre/
 data
 
 ### Flask ###

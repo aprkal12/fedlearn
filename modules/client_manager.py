@@ -67,6 +67,12 @@ def auto_run():
         print("training signal sent")
     return "auto run start"
 
+@client_bp.route('/client/stop_auto_run', methods=['POST'])
+def stop_auto_run():
+    gv.train_mode = 'default'  # 학습 모드를 'default'로 설정
+    print("auto run stopped")
+    return "auto run stopped"
+
 @client_bp.route('/client/name', methods=['POST'])
 def get_name():
     data = request.data.decode('utf-8')
