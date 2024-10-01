@@ -1,9 +1,5 @@
-import os
 import sys
 import uuid
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from model_manager import ModelManager
 from network_manager import NetworkManager
 import utils
@@ -20,29 +16,39 @@ class ClientAgent:
             self.on_connect,
             self.on_disconnect,
             self.on_aggregated_params,
-            self.on_train
+            self.on_train,
+            self.on_testcon
         )
+
+    def on_testcon(self, data=None):
+        # print("hello")
+        # print(data.get('sid'))
+        utils.set_sid(data.get('sid'))
 
     def on_connect(self):
         print("서버 연결")
         utils.set_host()
         utils.set_id()
         name, ip = utils.get_host()
-        uid = utils.get_id()
+        # sid = self.network_manager.get_sid()
+        sid = utils.get_sid()
         # client_info = {"hostname": name, "id": uid}
-        client_info = {"id": uid}
+        # print(sid)
+        client_info = {"sid":sid}
         response = self.network_manager.register_client(client_info)
         
         self.params = self.model_manager.decompress_params(response.content)
 
-        response = self.network_manager.set_uid(uid)
+        response = self.network_manager.set_uid(sid)
         name = response.content.decode('utf-8')
+
         utils.set_name(name) # uid 기반으로 서버로부터 부여된 클라이언트 id (client1, client2 ...) 가져오기
 
-        self.network_manager.post_params_signal("ready")
+        self.network_manager.post_params_signal("join")
     
     def on_disconnect(self):
         print("서버 연결이 끊어졌습니다.")
+        self.network_manager.disconnect()
         sys.exit(0)
 
     def on_aggregated_params(self):

@@ -1,5 +1,5 @@
-from flask import Flask, current_app, render_template, g
-from flask_socketio import SocketIO
+from flask import Flask, current_app, render_template, g, request
+from flask_socketio import SocketIO, join_room, rooms
 from models.Resnet_setdata import DataManager
 from modules import transmitter_bp, aggregate_bp, client_bp
 from models.Resnet_infer import Inference
@@ -26,6 +26,16 @@ app.register_blueprint(client_bp)
 #     }
 # )
 # wandb.run.name = "Resnet18_CIFAR-10_D=100%_E=2_C=3"
+@gv.socketio.on('connect')
+def handle_connect():
+    print("client connected")
+    sid = request.sid  # 서버에서 클라이언트의 sid 확인
+    # ip = request.remote_addr  # 클라이언트의 ip 확인
+    # agent = request.headers.get('User-Agent')  # 클라이언트의 user-agent 확인
+    # print("ip = ", ip, "\nagent = ", agent, "\nsid = ", sid)
+    join_room(sid)
+    gv.socketio.emit('test_connect', {'sid': sid}, to=sid)
+    # 클라이언트에서 rest로 연결요청을 보내는게 아니라 소켓이 연결되면 emit로 지금 현재 sid 알려주기
 
 @gv.socketio.on('request_update')
 def handle_request_update():
@@ -51,15 +61,23 @@ def handle_request_update():
     else:
         global_model = gv.global_model_accuracy[round_num-1]
     
+    if gv.train_mode == 'auto':
+        autorun = True
+    else:
+        autorun = False
+
+    rounds = list(range(1, len(gv.global_model_accuracy)+1))
+
     data = {
         'global_model_accuracy': global_model,  
         'current_round': round_num,             
         'clients': clients,
         'client_num': clients_num,
         'client_status': client_status,
-        'rounds': list(range(1, len(gv.global_model_accuracy)+1)),  # 라운드 숫자 리스트 생성
+        'rounds': rounds,  # 라운드 숫자 리스트 생성
         'accuracy_history': gv.global_model_accuracy,  # 정확도 히스토리
-        'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        'autorun_status': autorun,
+        'last_updated': gv.last_updated
     }
     # gv.socketio.emit('update_data', data)
     update_data(data)

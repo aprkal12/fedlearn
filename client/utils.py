@@ -5,6 +5,7 @@ hostname = None
 hostip = None
 uid = None
 name = None
+sid = None
 
 def set_host():
     global hostname, hostip
@@ -42,3 +43,11 @@ def set_name(received_name):
 def get_name():
     global name
     return name
+
+def set_sid(received_sid):
+    global sid
+    sid = received_sid
+
+def get_sid():
+    global sid
+    return sid

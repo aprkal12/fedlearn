@@ -1,0 +1,19 @@
+Experiment Metadata
+Client Count,5
+Auto Run Rounds,50
+Clients Epochs(round),2
+model,resnet18
+Dataset,CIFAR-10
+Data Size,"{'train': 10000, 'val': 1000, 'test': 1000}"
+Best Round,6
+Best Accuracy,84.89999999999999
+Duration of time,0 h 26 min 57 sec
+
+Round,Accuracy (%),Client Count
+1,66.5,5
+2,76.8,5
+3,81.10000000000001,5
+4,81.10000000000001,5
+5,82.69999999999999,5
+6,84.89999999999999,5
+7,84.2,5

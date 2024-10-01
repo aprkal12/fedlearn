@@ -10,28 +10,29 @@
 </head>
 <body>
     <div class="container">
-        <h1>Federated learning</h1>
+        <h1>Federated Learning Dashboard</h1>
 
         <!-- 가로 배치된 클라이언트 목록과 글로벌 상태 -->
         <div class="top-section">
             <div class="card">
-                <h2>현재 연결된 클라이언트들</h2>
+                <h2>Clients</h2>
                 <ul id="client_list">
                     <!-- 클라이언트 목록이 여기에 표시됩니다 -->
                 </ul>
             </div>
             <div class="card">
-                <h2>글로벌 모델 상태</h2>
-                <p>현재 라운드: <span id="current-round">0</span></p>
-                <p>참여 클라이언트 수: <span id="client_num">0</span></p>
-                <p>글로벌 모델 정확도: <span id="global-model-accuracy">0.0</span>%</p>
-                <p>마지막 업데이트: <span id="last-updated">Never</span></p>
+                <h2>Global Model Status</h2>
+                <p>auto run : <span id="autorun-status">OFF</span></p>
+                <p>current round: <span id="current-round">0</span></p>
+                <p>number of clients: <span id="client_num">0</span></p>
+                <p>global model accuracy: <span id="global-model-accuracy">0.0</span>%</p>
+                <p>last updated: <span id="last-updated">Never</span></p>
             </div>
         </div>
 
         <!-- 정확도 그래프 -->
         <div class="graph-section">
-            <h2>정확도 그래프</h2>
+            <h2>Accuracy_history</h2>
             <canvas id="accuracyChart" width="500" height="200"></canvas>
         </div>
 
@@ -43,12 +44,12 @@
                 <input type="number" id="round-count" min="1" value="1">
                 <div class="round-buttons">
                     <button onclick="startAutoRun()">start</button>
-                    <button onclick="stopAutoRun()">Stop</button>
+                    <button onclick="stopAutoRun()">stop</button>
                 </div>
             </div>
 
             <div class="buttons-container">
-                <button onclick="startClientTraining()">Train clients</button>
+                <button onclick="startClientTraining()">train clients</button>
                 <button onclick="aggregateParameters()">aggregate</button>
             </div>
         </div>
@@ -66,16 +67,42 @@
                 document.getElementById('current-round').textContent = data.current_round;
                 document.getElementById('last-updated').textContent = data.last_updated;
                 document.getElementById('client_num').textContent = data.client_num;
+                document.getElementById('autorun-status').textContent = data.autorun_status ? 'ON' : 'OFF';
                 if(data.client_status == null){
                     data.client_status = 0;
                 }
                 
                 var clientList = document.getElementById('client_list');
                 clientList.innerHTML = '';
+                // for (var client in data.clients) {
+                //     console.log('Client:', client, 'ID:', data.clients[client]);
+                //     var li = document.createElement('li');
+                //     li.textContent = client + ' - ' + data.client_status[client];
+                //     clientList.appendChild(li);
+                // }
                 for (var client in data.clients) {
-                    console.log('Client:', client, 'ID:', data.clients[client]);
                     var li = document.createElement('li');
                     li.textContent = client + ' - ' + data.client_status[client];
+
+                    // 연결 해제 버튼 추가
+                    var disconnectButton = document.createElement('button');
+                    disconnectButton.textContent = "disconnect";  // 버튼 텍스트
+                    disconnectButton.style.marginLeft = "10px";  // 간격을 위한 스타일
+                    disconnectButton.style.marginBottom = "10px";
+                    disconnectButton.style.fontSize = "0.9em";   // 버튼 글씨 크기 조정
+                    disconnectButton.style.width = "100px";       // 버튼 너비 조정
+                    disconnectButton.style.height = "30px";       // 버튼 높이 조정
+                    disconnectButton.style.padding = "0";         // 버튼 안쪽 여백 제거
+
+
+
+                    disconnectButton.onclick = (function(clientId) {
+                        return function() {
+                            disconnectClient(clientId);  // 연결 해제 함수 호출
+                        };
+                    })(client);  // 클라이언트 ID를 전달하기 위한 IIFE 사용
+                    // 리스트 아이템에 버튼 추가
+                    li.appendChild(disconnectButton);
                     clientList.appendChild(li);
                 }
                 
@@ -99,7 +126,18 @@
                     updateClientStatus(names, signal);
                 }
             });
-            
+            function disconnectClient(client_id) {
+                fetch(`/client/disconnect?client_id=${client_id}`, {
+                    method: 'POST',
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                })
+                .catch(error => {
+                    alert('Error disconnecting client: ' + error.message);
+                });
+            }
             // 클라이언트 상태 업데이트를 위한 공통 함수
             function updateClientStatus(client, signal) {
                 var li = document.querySelector(`li[data-client="${client}"]`);
@@ -174,7 +212,7 @@
         }
 
         // 현재 라운드를 종료하는 함수
-        function stopAfterCurrentRound() {
+        function stopAutoRun() {
             fetch('/client/stop_auto_run', {
                 method: 'POST',
             })

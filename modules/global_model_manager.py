@@ -1,3 +1,4 @@
+import datetime
 from flask import current_app, request, g
 from flask_socketio import emit, SocketIO
 from . import aggregate_bp
@@ -72,6 +73,7 @@ def global_model_update():
 
     print("global model val loss: %.6f, accuracy: %.2f %%" %(val_loss, 100*val_metric))
     gv.global_model_accuracy.append(100*val_metric)
+    gv.last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if 100*val_metric > gv.best_acc:
         gv.best_acc = 100*val_metric
