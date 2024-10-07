@@ -100,6 +100,15 @@ h1 {
     text-align: center;
 }
 
+.manual-section {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    text-align: center;
+}
+
 /* 목표 라운드 입력 필드 */
 input[type="number"] {
     padding: 5px;
@@ -119,15 +128,21 @@ input[type="number"] {
     gap: 10px;
     margin-top: 15px;
 }
+.manual-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 15px;
+}
 
 /* Train clients, aggregate 버튼 - 높이 제한 및 중간 정렬 */
-.buttons-container {
+/* .buttons-container {
     display: flex;
     justify-content: space-between;
     width: 300px;
     height: 50px;
     align-items: center;
-}
+} */
 
 button {
     background-color: #007BFF;

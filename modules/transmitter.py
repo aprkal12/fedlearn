@@ -70,7 +70,7 @@ def signal():
                 print(f"round {gv.round_num} start")
                 print("training signal sent")
                 return "training signal sent"
-            elif signal == 'Finish':
+            elif signal == 'finish':
                 msg = round_manager()
                 # print(msg)
                 # test_loss, test_metric = gv.model.get_accuracy(gv.model.model, 'test')
@@ -91,7 +91,7 @@ def signal():
 
 
 def all_clients_same_signal(signal):
-    print(signal)
+    print(gv.client_status)
     for status in gv.client_status.values():
         if status != signal:
             return False

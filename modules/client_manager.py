@@ -11,7 +11,7 @@ import global_vars as gv
 import datetime
 
 
-@client_bp.route('/client', methods=['POST'])
+@client_bp.route('/client', methods=['POST', 'GET'])
 def register_client():
     if request.method == 'POST':
         data = request.json  # 클라이언트로부터 전송된 JSON 데이터 받기
@@ -23,13 +23,14 @@ def register_client():
         
         gv.client_len += 1
         gv.client_list[client_id] = client_name
+        # gv.client_status[client_name] = 'waiting'
         # gv.client_sockets[client_id] = data['sid']
         
-        print("client registered")
-        print(data['sid'])
-        # gv.socketio.emit('reload')
+        gv.client_status[client_id] = 'waiting'
         send_reload_signal()
-        
+        return client_id
+    
+    elif request.method == 'GET':
         params = gv.model.parameter_extract()
         binary_data = pickle.dumps(params)
         comp_data = zstd.compress(binary_data)
@@ -86,13 +87,6 @@ def stop_auto_run():
     autorun_complete()
     print("auto run stopped")
     return "auto run stopped"
-
-@client_bp.route('/client/name', methods=['POST'])
-def get_name():
-    data = request.data.decode('utf-8')
-    # print(data)
-    name = [k for k, v in gv.client_list.items() if v == data][0]
-    return name
 
 @client_bp.route('/client/disconnect', methods=['POST'])
 def disconnect_client():

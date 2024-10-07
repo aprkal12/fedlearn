@@ -29,20 +29,15 @@ class ClientAgent:
         print("서버 연결")
         utils.set_host()
         utils.set_id()
-        name, ip = utils.get_host()
-        # sid = self.network_manager.get_sid()
         sid = utils.get_sid()
-        # client_info = {"hostname": name, "id": uid}
-        # print(sid)
         client_info = {"sid":sid}
-        response = self.network_manager.register_client(client_info)
         
-        self.params = self.model_manager.decompress_params(response.content)
-
-        response = self.network_manager.set_uid(sid)
+        response = self.network_manager.register_client(client_info)
         name = response.content.decode('utf-8')
+        utils.set_name(name)
 
-        utils.set_name(name) # uid 기반으로 서버로부터 부여된 클라이언트 id (client1, client2 ...) 가져오기
+        response = self.network_manager.get_initial_params()
+        self.params = self.model_manager.decompress_params(response.content)
 
         self.network_manager.post_params_signal("join")
     
@@ -53,6 +48,7 @@ class ClientAgent:
 
     def on_aggregated_params(self):
         print("집계된 파라미터 수신")
+        self.network_manager.post_params_signal("update")
         try:
             comp_data = self.network_manager.fetch_aggregated_params()
             if comp_data:
@@ -76,7 +72,7 @@ class ClientAgent:
         updated_params = self.model_manager.extract_params()
         compressed_params = self.model_manager.compress_params(updated_params)
         self.network_manager.send_params(compressed_params)
-        self.network_manager.post_params_signal("Finish")
+        self.network_manager.post_params_signal("finish")
 
     def start(self):
         self.connect_to_server()

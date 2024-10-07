@@ -45,11 +45,11 @@ def handle_request_update():
     client_status = gv.client_status # 클라이언트 상태
     clients_num = len(clients)
 
-    if round_num == 0:
-        clients_num = 0
-        for client in clients:
-            if client not in client_status.keys(): # 상태에 대한 정보가 없다면
-                client_status[client] = 'waiting'
+    # if round_num == 0:
+    #     clients_num = 0
+    #     for client in clients:
+    #         if client not in client_status.keys(): # 상태에 대한 정보가 없다면
+    #             client_status[client] = 'waiting'
 
     if not gv.global_model_accuracy:
         # gv.global_model_accuracy.append(0.0)

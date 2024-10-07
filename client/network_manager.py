@@ -14,9 +14,9 @@ class NetworkManager:
     def register_client(self, client_info):
         return requests.post(f"{self.server_url}/client", json=client_info, verify=False)
     
-    def set_uid(self, uid):
-        return requests.post(f"{self.server_url}/client/name", data=uid, verify=False)
-
+    def get_initial_params(self):
+        return requests.get(f"{self.server_url}/client")
+    
     def send_params(self, params):
         # name = utils.get_hostname()
         name = utils.get_name()

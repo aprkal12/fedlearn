@@ -37,8 +37,9 @@ def aggregate_parameters():
     with parameter_lock:
         if gv.post_num == expected_clients:
             for status in gv.client_status.values():
-                if status != "Finish":
+                if status != "finish":
                     # return "이전 라운드의 학습이 완료되지 않았습니다."
+                    print("The previous round's training is not complete.")
                     return "The previous round's training is not complete."
             print("parameter aggregation start")
             gv.avg_weights = {}

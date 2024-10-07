@@ -15,6 +15,7 @@ cifar100_non_iid/
 for_client_data/
 for_client_data_pre/
 data
+experiment_results/
 
 ### Flask ###
 instance/*

@@ -22,7 +22,7 @@
             </div>
             <div class="card">
                 <h2>Global Model Status</h2>
-                <p>auto run : <span id="autorun-status">OFF</span></p>
+                <p>round autorun : <span id="autorun-status">OFF</span></p>
                 <p>current round: <span id="current-round">0</span></p>
                 <p>number of clients: <span id="client_num">0</span></p>
                 <p>global model accuracy: <span id="global-model-accuracy">0.0</span>%</p>
@@ -32,14 +32,14 @@
 
         <!-- 정확도 그래프 -->
         <div class="graph-section">
-            <h2>Accuracy_history</h2>
+            <h2>Global Model Accuracy</h2>
             <canvas id="accuracyChart" width="500" height="200"></canvas>
         </div>
 
         <!-- 목표 라운드 입력 및 버튼들 -->
         <div class="bottom-section">
             <div class="round-section">
-                <h2>autorun</h2>  <!-- 타이틀로 변경 -->
+                <h2>Round Autorun</h2>  <!-- 타이틀로 변경 -->
                 <label for="round-count">Enter target round > </label>
                 <input type="number" id="round-count" min="1" value="1">
                 <div class="round-buttons">
@@ -48,9 +48,12 @@
                 </div>
             </div>
 
-            <div class="buttons-container">
-                <button onclick="startClientTraining()">train clients</button>
-                <button onclick="aggregateParameters()">aggregate</button>
+            <div class="manual-section">
+                <h2>Manual Control</h2>
+                <div class="manual-buttons">
+                    <button onclick="startClientTraining()">train clients</button>
+                    <button onclick="aggregateParameters()">aggregate</button>
+                </div>
             </div>
         </div>
     </div>
@@ -153,6 +156,19 @@
             }
             // 
             function renderChart(labels, data) {
+                if (data.length > 0) {
+                    // 정확도 데이터에서 최소값과 최대값 계산
+                    var minAccuracy = Math.min(...data);
+                    var maxAccuracy = Math.max(...data);
+
+                    // 최소값과 최대값에 +-10% 범위를 적용
+                    var minY = Math.max(minAccuracy - 10, 0);  // 최소값이 0 미만으로 내려가지 않도록 설정
+                    var maxY = Math.min(maxAccuracy + 10, 100);  // 최대값이 100을 넘지 않도록 설정
+                }else{
+                    var minY = 0;
+                    var maxY = 100;
+                }
+                
                 if (accuracyChart) {
                     accuracyChart.destroy();
                 }
@@ -181,8 +197,10 @@
                                     display: true,
                                     text: 'Accuracy (%)'
                                 },
-                                min: 0,
-                                max: 100
+                                // min: 0,
+                                // max: 100
+                                min: minY,
+                                max: maxY
                             }
                         }
                     }
