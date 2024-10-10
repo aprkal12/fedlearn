@@ -20,7 +20,7 @@ client_status = {} # 클라이언트 상태
 
 train_mode = 'default' # 학습 모드
 
-auto_run_rounds = 1 # 자동 학습 라운드 수
+auto_run_rounds = 0 # 자동 학습 라운드 수
 
 auto_start_time = None # 자동 학습 시작 시간
 

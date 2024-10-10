@@ -21,15 +21,8 @@ class NetworkManager:
         # name = utils.get_hostname()
         name = utils.get_name()
         
-        b64_data = base64.b64encode(params).decode('utf-8') # base64 방식
-        data = {
-            'client_name': name,
-            'params': b64_data # base64 방식
-            # 'params': comp_data.hex() # 16진법 방식
-        }
-
         print("파라미터 전송")
-        response = requests.post(f"{self.server_url}/transmitter", json=data)
+        response = requests.post(f"{self.server_url}/transmitter?name={name}", data=params)
         return response.text
     
     def fetch_aggregated_params(self):

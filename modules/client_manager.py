@@ -61,32 +61,31 @@ def training():
         print("not all clients are ready")
         return "not all clients are ready"
     
-@client_bp.route('/client/auto_run', methods=['POST'])
+@client_bp.route('/client/autorun', methods=['POST', 'DELETE'])
 def auto_run():
-    if gv.train_mode == 'auto':
-        print("auto run already started")
-        return "auto run already started"
-    else:
-        gv.auto_run_rounds = int(request.args.get('rounds', 1))  # 사용자가 지정한 라운드 수 가져오기
-        gv.auto_start_time = datetime.datetime.now()  # 자동 학습 시작 시간 기록
-        gv.train_mode = 'auto'  # 학습 모드를 'auto'로 설정
-        print("auto run start")
-        print("goal rounds: ", gv.auto_run_rounds)
+    if request.method == 'POST':
         if gv.train_mode == 'auto':
-            # gv.socketio.emit('training')
-            send_training_signal()
-            gv.round_num += 1
-            print()
-            print("="*10)
-            print("round %d start" % gv.round_num)
-            print("training signal sent")
-        return "auto run start"
-
-@client_bp.route('/client/stop_auto_run', methods=['POST'])
-def stop_auto_run():
-    autorun_complete()
-    print("auto run stopped")
-    return "auto run stopped"
+            print("auto run already started")
+            return "auto run already started"
+        else:
+            gv.auto_run_rounds = int(request.args.get('rounds', 1))  # 사용자가 지정한 라운드 수 가져오기
+            gv.auto_start_time = datetime.datetime.now()  # 자동 학습 시작 시간 기록
+            gv.train_mode = 'auto'  # 학습 모드를 'auto'로 설정
+            print("auto run start")
+            print("goal rounds: ", gv.auto_run_rounds)
+            if gv.train_mode == 'auto':
+                # gv.socketio.emit('training')
+                send_training_signal()
+                gv.round_num += 1
+                print()
+                print("="*10)
+                print("round %d start" % gv.round_num)
+                print("training signal sent")
+            return "auto run start"
+    elif request.method == 'DELETE':
+        autorun_complete()
+        print("auto run stopped")
+        return "auto run stopped"
 
 @client_bp.route('/client/disconnect', methods=['POST'])
 def disconnect_client():

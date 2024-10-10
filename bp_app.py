@@ -77,7 +77,8 @@ def handle_request_update():
         'rounds': rounds,  # 라운드 숫자 리스트 생성
         'accuracy_history': gv.global_model_accuracy,  # 정확도 히스토리
         'autorun_status': autorun,
-        'last_updated': gv.last_updated
+        'last_updated': gv.last_updated,
+        'autorun_target_round': gv.auto_run_rounds
     }
     # gv.socketio.emit('update_data', data)
     update_data(data)

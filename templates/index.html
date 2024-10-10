@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Federated Learning Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
@@ -22,7 +30,7 @@
             </div>
             <div class="card">
                 <h2>Global Model Status</h2>
-                <p>round autorun : <span id="autorun-status">OFF</span></p>
+                <p>round autorun : <span id="autorun-status">OFF</span> (total <span id="autorun-target-round">0</span> round)</p>
                 <p>current round: <span id="current-round">0</span></p>
                 <p>number of clients: <span id="client_num">0</span></p>
                 <p>global model accuracy: <span id="global-model-accuracy">0.0</span>%</p>
@@ -41,7 +49,7 @@
             <div class="round-section">
                 <h2>Round Autorun</h2>  <!-- 타이틀로 변경 -->
                 <label for="round-count">Enter target round > </label>
-                <input type="number" id="round-count" min="1" value="1">
+                <input type="number" id="round-count" min="1" value="0">
                 <div class="round-buttons">
                     <button onclick="startAutoRun()">start</button>
                     <button onclick="stopAutoRun()">stop</button>
@@ -71,6 +79,7 @@
                 document.getElementById('last-updated').textContent = data.last_updated;
                 document.getElementById('client_num').textContent = data.client_num;
                 document.getElementById('autorun-status').textContent = data.autorun_status ? 'ON' : 'OFF';
+                document.getElementById('autorun-target-round').textContent = data.autorun_target_round || 0;
                 if(data.client_status == null){
                     data.client_status = 0;
                 }
@@ -155,6 +164,57 @@
                 }
             }
             // 
+            // function renderChart(labels, data) {
+            //     if (data.length > 0) {
+            //         // 정확도 데이터에서 최소값과 최대값 계산
+            //         var minAccuracy = Math.min(...data);
+            //         var maxAccuracy = Math.max(...data);
+
+            //         // 최소값과 최대값에 +-10% 범위를 적용
+            //         var minY = Math.max(minAccuracy - 10, 0);  // 최소값이 0 미만으로 내려가지 않도록 설정
+            //         var maxY = Math.min(maxAccuracy + 10, 100);  // 최대값이 100을 넘지 않도록 설정
+            //     }else{
+            //         var minY = 0;
+            //         var maxY = 100;
+            //     }
+                
+            //     if (accuracyChart) {
+            //         accuracyChart.destroy();
+            //     }
+            //     accuracyChart = new Chart(ctx, {
+            //         type: 'line',
+            //         data: {
+            //             labels: labels,  // 라운드 번호 리스트
+            //             datasets: [{
+            //                 label: 'Accuracy per Round (%)',
+            //                 data: data,  // 정확도 리스트
+            //                 borderColor: 'rgba(75, 192, 192, 1)',
+            //                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            //                 fill: false,
+            //             }]
+            //         },
+            //         options: {
+            //             scales: {
+            //                 x: {
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Round'
+            //                     }
+            //                 },
+            //                 y: {
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Accuracy (%)'
+            //                     },
+            //                     // min: 0,
+            //                     // max: 100
+            //                     min: minY,
+            //                     max: maxY
+            //                 }
+            //             }
+            //         }
+            //     });
+            // }
             function renderChart(labels, data) {
                 if (data.length > 0) {
                     // 정확도 데이터에서 최소값과 최대값 계산
@@ -164,11 +224,11 @@
                     // 최소값과 최대값에 +-10% 범위를 적용
                     var minY = Math.max(minAccuracy - 10, 0);  // 최소값이 0 미만으로 내려가지 않도록 설정
                     var maxY = Math.min(maxAccuracy + 10, 100);  // 최대값이 100을 넘지 않도록 설정
-                }else{
+                } else {
                     var minY = 0;
                     var maxY = 100;
                 }
-                
+
                 if (accuracyChart) {
                     accuracyChart.destroy();
                 }
@@ -182,30 +242,74 @@
                             borderColor: 'rgba(75, 192, 192, 1)',
                             backgroundColor: 'rgba(75, 192, 192, 0.2)',
                             fill: false,
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 3, // 수정
+                                clip: false,
+                                font: {
+                                    weight: 'bold',
+                                    size: 16
+                                },
+                                formatter: function(value) {
+                                    return value.toFixed(1) + '%';  // 소수점 첫째 자리까지만 반올림하여 표시
+                                },
+                            }
                         }]
                     },
                     options: {
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 25 // 여기서 패딩을 추가하여 오른쪽 라벨이 잘리지 않도록 함
+                            }
+                        },
                         scales: {
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Round'
+                                    text: 'Round',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
                                 }
                             },
                             y: {
                                 title: {
                                     display: true,
-                                    text: 'Accuracy (%)'
+                                    text: 'Accuracy (%)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
                                 },
-                                // min: 0,
-                                // max: 100
                                 min: minY,
-                                max: maxY
+                                max: maxY,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toFixed(1) + '%';  // y축 라벨도 소수점 첫째 자리까지 표시
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
                             }
                         }
-                    }
+                    },
+                    plugins: [ChartDataLabels]
                 });
             }
+
+
 
 
             socket.emit('request_update');
@@ -217,7 +321,7 @@
 
         function startAutoRun() {  // Auto Run
             const roundCount = document.getElementById('round-count').value; // 라운드 수 가져오기
-            fetch(`/client/auto_run?rounds=${roundCount}`, {
+            fetch(`/client/autorun?rounds=${roundCount}`, {
                 method: 'POST',
             })
             .then(response => response.text())
@@ -231,8 +335,8 @@
 
         // 현재 라운드를 종료하는 함수
         function stopAutoRun() {
-            fetch('/client/stop_auto_run', {
-                method: 'POST',
+            fetch('/client/autorun', {
+                method: 'DELETE',
             })
             .then(response => response.text())
             .then(data => {

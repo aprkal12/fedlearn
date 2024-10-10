@@ -20,10 +20,14 @@ transmitter_lock = threading.Lock()
 def handle_parameter():
 
     if request.method == 'POST':  # 클라이언트로부터 파라미터 수신
-        data = request.json
-        client_name = data['client_name']
+        client_name = request.args.get('name', 'default')
+        comp_data = request.data
+        # data = request.json
+        # client_name = data['client_name']
+        if client_name not in gv.client_list.keys():
+            return "client not registered", 400
         print(f"params received from {client_name}")
-        comp_data = base64.b64decode(data['params']) # base64 디코딩
+        # comp_data = base64.b64decode(data) # base64 디코딩
         # comp_data = bytes.fromhex(data['params']) # hex 디코딩
         # comp_data = request.data
         decomp_data = zstd.decompress(comp_data)
@@ -91,7 +95,6 @@ def signal():
 
 
 def all_clients_same_signal(signal):
-    print(gv.client_status)
     for status in gv.client_status.values():
         if status != signal:
             return False
