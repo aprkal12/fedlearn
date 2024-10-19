@@ -115,24 +115,26 @@ def autorun_complete():
     gv.auto_end_time = datetime.datetime.now()
     print("auto run complete")
 
-    dtime = duration_of_time(gv.auto_start_time, gv.auto_end_time)
+    dtime, dperround = duration_of_time(gv.auto_run_rounds, gv.auto_start_time, gv.auto_end_time)
     # 실험 결과를 CSV 파일로 저장
     metadata = {
-        "Client Count": len(gv.client_list),
         "Auto Run Rounds": gv.auto_run_rounds,
+        "Client Count": len(gv.client_list),
         "Clients Epochs(round)": 2,
         "model": gv.model.model_name,
         "Dataset": "CIFAR-10",
         "Data Size": gv.model.get_data_size(),
         "Best Round": gv.best_round,
         "Best Accuracy": gv.best_acc,
-        "Duration of time": dtime
+        "Duration of time": dtime,
+        "Duration per round": dperround
     }
     save_experiment_results_csv(len(gv.client_list), gv.global_model_accuracy, metadata)
     send_reload_signal()
 
-def duration_of_time(start_time, end_time):
+def duration_of_time(autorun_rounds, start_time, end_time):
     duration = end_time - start_time
+    duration_per_round = duration / autorun_rounds
     total_seconds = duration.total_seconds()
     hours, remainder = divmod(int(total_seconds), 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -140,7 +142,7 @@ def duration_of_time(start_time, end_time):
     # "000시간 00분 00초" 형식으로 포맷팅 (시간은 필요에 따라 자릿수 확장)
     formatted_duration = f"{hours} h {minutes:02} min {seconds:02} sec"
     
-    return formatted_duration
+    return formatted_duration, duration_per_round
 
 def save_experiment_results_csv(client_count, round_accuracies, experiment_metadata):
     """
@@ -159,7 +161,7 @@ def save_experiment_results_csv(client_count, round_accuracies, experiment_metad
 
     # 디렉토리의 파일 개수를 확인하여 새로운 파일 이름 생성
     file_count = len([f for f in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, f))])
-    new_file_name = f"non_iid_experiment_results_{file_count + 1}.csv"
+    new_file_name = f"iid_experiment_results_{file_count + 1}.csv"
 
     # CSV 파일로 저장
     output_file = os.path.join(output_dir, new_file_name)
@@ -203,4 +205,3 @@ def send_training_signal(sid=None):
 
 def update_data(data):
     gv.socketio.emit('update_data', data)
-

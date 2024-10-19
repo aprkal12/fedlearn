@@ -65,12 +65,13 @@ def next_round_set():
     
 def global_model_update():
     gv.model.load_parameter(gv.avg_weights)
-    # train_loss, train_metric = gv.model.get_accuracy('train')
+    # train_loss, train_metric = gv.model.get_accuracy(gv.model.model, 'train')
     # test_loss, test_metric = gv.model.get_accuracy(gv.model.model, 'test')
     val_loss, val_metric = gv.model.get_accuracy(gv.model.model, 'val')
 
     # print("wandb logging...")
-    # wandb.log({"test_loss" : test_loss, "test_acc" : test_metric, "val_loss" : val_loss, "val_acc" : val_metric})
+    # wandb.log({"test_loss" : test_loss, "test_acc" : test_metric, "val_loss" : val_loss, "val_acc" : val_metric, 'train_loss' : train_loss, 'train_acc' : train_metric})
+    # wandb.log({"val_loss" : val_loss, "val_acc" : val_metric})
 
     print("global model val loss: %.6f, accuracy: %.2f %%" %(val_loss, 100*val_metric))
     gv.global_model_accuracy.append(100*val_metric)

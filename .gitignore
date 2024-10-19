@@ -14,6 +14,10 @@ client_data_custom_distribution/
 cifar100_non_iid/
 for_client_data/
 for_client_data_pre/
+for_client_data_5/
+for_client_data_4/
+for_client_data_3/
+for_client_data_2/
 data
 experiment_results/
 

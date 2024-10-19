@@ -232,6 +232,16 @@
                 if (accuracyChart) {
                     accuracyChart.destroy();
                 }
+
+                let fontSize = 16;
+                if (labels.length > 20) {
+                    fontSize = 12;
+                }else if(labels.length > 30){
+                    fontSize = 8;
+                }else if(labels.length > 40){
+                    fontSize = 4;
+                }
+
                 accuracyChart = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -249,7 +259,7 @@
                                 clip: false,
                                 font: {
                                     weight: 'bold',
-                                    size: 16
+                                    size: fontSize
                                 },
                                 formatter: function(value) {
                                     return value.toFixed(1) + '%';  // 소수점 첫째 자리까지만 반올림하여 표시

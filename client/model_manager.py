@@ -10,8 +10,8 @@ import zstd
 class ModelManager:
     def __init__(self):
         self.model = Inference()
-        self.model.set_variable(client_id=0, non_iid_set=True)
-        self.model.set_epoch(2)
+        self.model.set_variable(client_id=4, non_iid_set=True, num_clients=5)
+        self.model.set_epoch(3)
     
     def set_epoch(self, n):
         self.model.set_epoch(n)

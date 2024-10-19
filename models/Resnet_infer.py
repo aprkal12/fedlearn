@@ -60,7 +60,7 @@ class Inference():
     # def check_cifar100_data(self, num_clients):
     #     SetData().check_imbalanced_data_100(num_clients)
 
-    def set_variable(self, data_size=None, client_id=None, non_iid_set=None):
+    def set_variable(self, data_size=None, client_id=None, non_iid_set=None, num_clients=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(self.device)
         self.model = resnet18().to(self.device)
@@ -69,12 +69,12 @@ class Inference():
 
         data_manager = DataManager()
 
-        if client_id is not None and non_iid_set is None:
+        if client_id is not None and non_iid_set is False:
             # IID 클라이언트 데이터 로드
-            self.train_dl, self.val_dl, self.test_dl = data_manager.client_run(client_id)
-        elif client_id is not None and non_iid_set is not None:
+            self.train_dl, self.val_dl, self.test_dl = data_manager.client_run(client_id, num_clients)
+        elif client_id is not None and non_iid_set is not False:
             # Non-IID 클라이언트 데이터 로드
-            self.train_dl, self.val_dl, self.test_dl = data_manager.non_iid_client_run(client_id)
+            self.train_dl, self.val_dl, self.test_dl = data_manager.non_iid_client_run(client_id, num_clients)
         elif non_iid_set is not None:
             # IID CIFAR-100 데이터 로드
             data_manager.dataset_name = 'CIFAR100'
@@ -206,7 +206,7 @@ class Inference():
         torch.save(self.parameter_extract(), 'models\\weights.pt')
         return 'models\\weights.pt'
     
-    def get_accuracy(self, model, mode = 'None'):
+    def get_accuracy(self, model = None, mode = 'None'):
         if mode == 'train':
             return self.loss_hist['train'][-1], self.metric_hist['train'][-1]
         elif mode == 'val':

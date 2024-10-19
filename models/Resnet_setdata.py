@@ -132,115 +132,189 @@ class DataManager:
         return self.run(data_size)
 
     def split_data(self, num_clients, data_size, iid=True, test_ratio=0.1, val_ratio=0.1):
-        if not os.path.exists(self.client_data_dir):
-            os.makedirs(self.client_data_dir)
+        if not os.path.exists(f'{self.client_data_dir}_{num_clients}'):
+            os.makedirs(f'{self.client_data_dir}_{num_clients}')
 
         self.download_data(data_size)
+        num_classes = 10 if self.dataset_name == 'CIFAR10' else 100
+        distribution_type = "iid" if iid else "non_iid"
+
+        # 전체 데이터를 섞어줍니다.
+        train_indices = list(range(len(self.train_ds)))
+        test_indices = list(range(len(self.test_ds)))
+        val_indices = list(range(len(self.val_ds)))
+
+        np.random.shuffle(train_indices)
+        np.random.shuffle(test_indices)
+        np.random.shuffle(val_indices)
+
+        # # 섞인 인덱스에 해당하는 클래스 레이블을 가져옵니다.
+        # train_labels = [self.train_ds.dataset.targets[idx] for idx in train_indices]
+        # test_labels = [self.test_ds.dataset.targets[idx] for idx in test_indices]
+        # val_labels = [self.val_ds.dataset.targets[idx] for idx in val_indices]
+
+
+        # from collections import Counter 
+        # # 클래스별 데이터 수를 카운트
+        # train_class_count = Counter(train_labels)
+        # test_class_count = Counter(test_labels)
+        # val_class_count = Counter(val_labels)
+        # # 클래스별 데이터 수 출력 및 총합 계산
+        # print("Train dataset class counts:")
+        # train_total_count = sum(train_class_count.values())
+        # for class_label, count in train_class_count.items():
+        #     print(f"Class {class_label}: {count} samples")
+        # print(f"Total train samples: {train_total_count}")
+
+        # print("\nTest dataset class counts:")
+        # test_total_count = sum(test_class_count.values())
+        # for class_label, count in test_class_count.items():
+        #     print(f"Class {class_label}: {count} samples")
+        # print(f"Total test samples: {test_total_count}")
+
+        # print("\nValidation dataset class counts:")
+        # val_total_count = sum(val_class_count.values())
+        # for class_label, count in val_class_count.items():
+        #     print(f"Class {class_label}: {count} samples")
+        # print(f"Total validation samples: {val_total_count}")
         if iid:
-            # IID 데이터 분할
-            total_train_size = len(self.train_ds)
-            indices = list(range(total_train_size))
-            np.random.shuffle(indices)
-            client_data_size = total_train_size // num_clients
-
-            for i in range(num_clients):
-                start_idx = i * client_data_size
-                end_idx = (i + 1) * client_data_size if i != num_clients - 1 else total_train_size
-                client_indices = indices[start_idx:end_idx]
-                client_train_dataset = Subset(self.train_ds.dataset, client_indices)
-
-                # 클라이언트 데이터 저장
-                with open(os.path.join(self.client_data_dir, f'client_{i}_train_data.pkl'), 'wb') as f:
-                    pickle.dump(client_train_dataset, f)
-
-                # 모든 클라이언트가 동일한 검증 및 테스트 데이터를 사용
-                with open(os.path.join(self.client_data_dir, f'client_{i}_val_data.pkl'), 'wb') as f:
-                    pickle.dump(self.val_ds, f)
-                with open(os.path.join(self.client_data_dir, f'client_{i}_test_data.pkl'), 'wb') as f:
-                    pickle.dump(self.test_ds, f)
+            self._split_iid(num_clients, train_indices, test_indices, val_indices, distribution_type)
         else:
-            # Non-IID 데이터 분할
-            num_classes = 10 if self.dataset_name == 'CIFAR10' else 100
+            self._split_non_iid(num_clients, train_indices, test_indices, val_indices, distribution_type)
 
-            class_data = {i: [] for i in range(num_classes)}
-            for idx in range(len(self.train_ds)):
-                _, label = self.train_ds[idx]
-                class_data[label].append(idx)
+        # self.print_dataset_statistics(num_clients, distribution_type)
 
-            client_train_data = {i: [] for i in range(num_clients)}
-            client_val_data = {i: [] for i in range(num_clients)}
-            client_test_data = {i: [] for i in range(num_clients)}
+    def _split_iid(self, num_clients, train_indices, test_indices, val_indices, distribution_type):
+        # 1. train 데이터를 클라이언트 수대로 나눕니다.
+        num_train_per_client = len(train_indices) // num_clients  # 각 클라이언트가 받을 train 데이터 크기
+        clients_train_indices = [train_indices[i*num_train_per_client:(i+1)*num_train_per_client] for i in range(num_clients)]
+         # 2. 각 클라이언트에 할당된 train 데이터의 0.1%를 validation과 test 데이터로 설정합니다.
 
-            for class_id, class_indices in class_data.items():
-                random.shuffle(class_indices)
-                class_size = len(class_indices)
+        for i, client_train_indices in enumerate(clients_train_indices):
+            client_train_size = len(client_train_indices)  # 각 클라이언트의 train 데이터 수
+            val_size = int(client_train_size * 0.1)  # 0.1%의 데이터 크기
+            test_size = int(client_train_size * 0.1)  # 0.1%의 데이터 크기
 
-                # Dirichlet 분포를 사용하여 클래스 데이터를 클라이언트에 분배
-                proportions = np.random.dirichlet(np.ones(num_clients))
-                start_idx = 0
-                for i in range(num_clients):
-                    num_samples = int(proportions[i] * class_size)
-                    client_indices = class_indices[start_idx:start_idx + num_samples]
-                    start_idx += num_samples
+            # 3. test_indices에서 test 데이터 추출
+            client_test_indices = test_indices[:test_size]
+            test_indices = test_indices[test_size:]  # 사용된 test 인덱스는 제외
 
-                    # 클라이언트 데이터 내에서 학습 및 검증 데이터로 분할
-                    num_val = int(val_ratio * len(client_indices))
-                    num_train = len(client_indices) - num_val
+            # 4. val_indices에서 validation 데이터 추출
+            client_val_indices = val_indices[:val_size]
+            val_indices = val_indices[val_size:]  # 사용된 val 인덱스는 제외
 
-                    client_train_data[i].extend(client_indices[:num_train])
-                    client_val_data[i].extend(client_indices[num_train:])
+            # 5. Subset을 만들어 각 클라이언트에 할당된 데이터를 저장합니다.
+            client_train = Subset(self.train_ds.dataset, client_train_indices)
+            client_val = Subset(self.train_ds.dataset, client_val_indices)
+            client_test = Subset(self.train_ds.dataset, client_test_indices)
 
-            # 테스트 데이터 분할
-            test_class_data = {i: [] for i in range(num_classes)}
-            for idx in range(len(self.test_ds)):
-                _, label = self.test_ds[idx]
-                test_class_data[label].append(idx)
+            # 6. 할당된 데이터를 저장 (필요한 방식에 맞춰 저장)
+            self._save_client_data(i, client_train, client_val, client_test, distribution_type, num_clients)
 
-            for class_id, class_indices in test_class_data.items():
-                random.shuffle(class_indices)
-                proportions = np.random.dirichlet(np.ones(num_clients))
-                start_idx = 0
-                for i in range(num_clients):
-                    num_samples = int(proportions[i] * len(class_indices))
-                    client_indices = class_indices[start_idx:start_idx + num_samples]
-                    start_idx += num_samples
+            print(f"클라이언트 {i+1}: train = {len(client_train_indices)}, val = {len(client_val_indices)}, test = {len(client_test_indices)}")
 
-                    client_test_data[i].extend(client_indices)
+    def _split_non_iid(self, num_clients, train_indices, test_indices, val_indices, distribution_type):
+        total_train_samples = len(train_indices)
 
-            # 클라이언트 데이터 저장
-            for i in range(num_clients):
-                client_train_dataset = Subset(self.train_ds.dataset, client_train_data[i])
-                client_val_dataset = Subset(self.train_ds.dataset, client_val_data[i])
-                client_test_dataset = Subset(self.test_ds.dataset, client_test_data[i])
+        # 각 클라이언트에 할당될 비율을 랜덤하게 생성 (합이 1이 되도록)
+        proportions = np.random.dirichlet(np.ones(num_clients), size=1)[0]  # 디리클레 분포 사용 (합계가 1이 되도록 보장)
 
-                with open(os.path.join(self.client_data_dir, f'client_{i}_train_data_non_iid.pkl'), 'wb') as f:
-                    pickle.dump(client_train_dataset, f)
-                with open(os.path.join(self.client_data_dir, f'client_{i}_val_data_non_iid.pkl'), 'wb') as f:
-                    pickle.dump(client_val_dataset, f)
-                with open(os.path.join(self.client_data_dir, f'client_{i}_test_data_non_iid.pkl'), 'wb') as f:
-                    pickle.dump(client_test_dataset, f)
+        # 1. train 데이터를 클라이언트 수대로 나누되, 각 클라이언트에 임의의 비율로 분배
+        clients_train_indices = []
+        start_idx = 0
+        for i, proportion in enumerate(proportions):
+            num_train_per_client = int(proportion * total_train_samples)  # 각 클라이언트에 할당할 데이터 수
+            end_idx = start_idx + num_train_per_client
+            clients_train_indices.append(train_indices[start_idx:end_idx])
+            start_idx = end_idx
 
-    def client_run(self, client_id):
-        self.load_client_data(client_id, iid=True)
+         # 2. 각 클라이언트에 할당된 train 데이터의 0.1%를 validation과 test 데이터로 설정합니다.
+
+        for i, client_train_indices in enumerate(clients_train_indices):
+            client_train_size = len(client_train_indices)  # 각 클라이언트의 train 데이터 수
+            val_size = int(client_train_size * 0.1)  # 0.1%의 데이터 크기
+            test_size = int(client_train_size * 0.1)  # 0.1%의 데이터 크기
+
+            # 3. test_indices에서 test 데이터 추출
+            client_test_indices = test_indices[:test_size]
+            test_indices = test_indices[test_size:]  # 사용된 test 인덱스는 제외
+
+            # 4. val_indices에서 validation 데이터 추출
+            client_val_indices = val_indices[:val_size]
+            val_indices = val_indices[val_size:]  # 사용된 val 인덱스는 제외
+
+            # 5. Subset을 만들어 각 클라이언트에 할당된 데이터를 저장합니다.
+            client_train = Subset(self.train_ds.dataset, client_train_indices)
+            client_val = Subset(self.train_ds.dataset, client_val_indices)
+            client_test = Subset(self.train_ds.dataset, client_test_indices)
+
+            # 6. 할당된 데이터를 저장 (필요한 방식에 맞춰 저장)
+            self._save_client_data(i, client_train, client_val, client_test, distribution_type, num_clients)
+
+            print(f"클라이언트 {i+1}: train = {len(client_train_indices)}, val = {len(client_val_indices)}, test = {len(client_test_indices)}")
+
+    def _save_client_data(self, client_id, train_data, val_data, test_data, distribution_type, num_clients=3):
+        with open(os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_train_data_{distribution_type}.pkl'), 'wb') as f:
+            pickle.dump(train_data, f)
+        with open(os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_val_data_{distribution_type}.pkl'), 'wb') as f:
+            pickle.dump(val_data, f)
+        with open(os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_test_data_{distribution_type}.pkl'), 'wb') as f:
+            pickle.dump(test_data, f)
+
+    def print_dataset_statistics(self, num_clients, distribution_type):
+        total_train, total_val, total_test = 0, 0, 0
+        for i in range(num_clients):
+            print(f"\nClient {i} 데이터셋 통계:")
+            for dataset_type in ['train', 'val', 'test']:
+                with open(os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{i}_{dataset_type}_data_{distribution_type}.pkl'), 'rb') as f:
+                    dataset = pickle.load(f)
+                
+                class_distribution = {}
+                for idx in dataset.indices:
+                    _, label = dataset.dataset[idx]
+                    if label not in class_distribution:
+                        class_distribution[label] = 0
+                    class_distribution[label] += 1
+                
+                print(f"  {dataset_type.capitalize()} 셋:")
+                print(f"    총 샘플 수: {len(dataset)}")
+                print(f"    클래스별 분포:")
+                for label, count in sorted(class_distribution.items()):
+                    print(f"      클래스 {label}: {count}")
+
+                if dataset_type == 'train':
+                    total_train += len(dataset)
+                elif dataset_type == 'val':
+                    total_val += len(dataset)
+                else:
+                    total_test += len(dataset)
+
+        print("\n전체 데이터셋 통계:")
+        print(f"  Train 셋 총 샘플 수: {total_train}")
+        print(f"  Val 셋 총 샘플 수: {total_val}")
+        print(f"  Test 셋 총 샘플 수: {total_test}")
+
+    def client_run(self, client_id, num_clients, distribution_type='iid'):
+        self.load_client_data(client_id, num_clients, distribution_type, iid=True)
         self.normalize_data()
         self.set_transformation()
         return self.train_dl, self.val_dl, self.test_dl
 
-    def non_iid_client_run(self, client_id):
-        self.load_client_data(client_id, iid=False)
+    def non_iid_client_run(self, client_id, num_clients, distribution_type='non_iid'):
+        self.load_client_data(client_id, num_clients, distribution_type, iid=False)
         self.normalize_data()
         self.set_transformation()
         return self.train_dl, self.val_dl, self.test_dl
 
-    def load_client_data(self, client_id, iid=True):
+    def load_client_data(self, client_id, num_clients, distribution_type, iid=True):
         if iid:
-            train_file = os.path.join(self.client_data_dir, f'client_{client_id}_train_data.pkl')
-            val_file = os.path.join(self.client_data_dir, f'client_{client_id}_val_data.pkl')
-            test_file = os.path.join(self.client_data_dir, f'client_{client_id}_test_data.pkl')
+            train_file = os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_train_data_{distribution_type}.pkl')
+            val_file = os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_val_data_{distribution_type}.pkl')
+            test_file = os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_test_data_{distribution_type}.pkl')
         else:
-            train_file = os.path.join(self.client_data_dir, f'client_{client_id}_train_data_non_iid.pkl')
-            val_file = os.path.join(self.client_data_dir, f'client_{client_id}_val_data_non_iid.pkl')
-            test_file = os.path.join(self.client_data_dir, f'client_{client_id}_test_data_non_iid.pkl')
+            train_file = os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_train_data_{distribution_type}.pkl')
+            val_file = os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_val_data_{distribution_type}.pkl')
+            test_file = os.path.join(f'{self.client_data_dir}_{num_clients}', f'client_{client_id}_test_data_{distribution_type}.pkl')
 
         with open(train_file, 'rb') as f:
             self.train_ds = pickle.load(f)

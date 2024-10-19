@@ -54,12 +54,13 @@ class ClientAgent:
             if comp_data:
                 self.params = self.model_manager.decompress_params(comp_data)
                 self.network_manager.post_params_signal("ready")
+                print("학습 대기")
         except Exception as e:
             self.network_manager.post_params_signal("error")
             print(f"Error during aggregated parameters processing: {e}")
     
     def on_train(self):
-        print("train start")
+        print("\ntrain start")
         self.model_manager.load_params(self.params)
         self.network_manager.post_params_signal("training") # 서버로 상태 전송
         self.train()

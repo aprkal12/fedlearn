@@ -16,16 +16,6 @@ app.register_blueprint(transmitter_bp)
 app.register_blueprint(aggregate_bp)
 app.register_blueprint(client_bp)
 
-# wandb.init(
-#     project="Federated Learning",
-#     entity="aprkal12",
-#     config={
-#         "learning_rate": 0.001,
-#         "architecture": "Resnet18",
-#         "dataset": "CIFAR-10",
-#     }
-# )
-# wandb.run.name = "Resnet18_CIFAR-10_D=100%_E=2_C=3"
 @gv.socketio.on('connect')
 def handle_connect():
     print("client connected")
@@ -89,15 +79,26 @@ def mainpage():
 
 if __name__ == '__main__':
     gv.model = Inference()
-    # data_manager = DataManager()
-    # data_manager.split_data(num_clients=5, data_size=1.0, iid=False)
-    gv.model.set_variable(0.2)
-    gv.model.set_epoch(1)
-    gv.model.run()
-    print("="*10)
-    print("Start server")
-    print("Model training complete")
-    datas = gv.model.parameter_extract()  # 모델에서 파라미터 추출
-    print("First params extracted")
-    print("Server ready")
-    gv.socketio.run(app, host='0.0.0.0', port=11110)
+    data_manager = DataManager()
+    data_manager.split_data(num_clients=5, data_size=0.5, iid=False)
+    # gv.model.set_variable(0.2)
+    # gv.model.set_epoch(1)
+    # gv.model.run()
+    # # wandb.init(
+    # #     project="Fed_Learning",
+    # #     entity="aprkal12",
+    # #     config={
+    # #         "learning_rate": 0.001,
+    # #         "architecture": "Resnet18",
+    # #         "dataset": "CIFAR-10",
+    # #     }
+    # # )
+    # # wandb.run.name = "Resnet18_CIFAR-10_D=100%_E=2_C=5_iid"
+    # # print("Wandb initialized")
+    # print("="*10)
+    # print("Start server")
+    # print("Model training complete")
+    # datas = gv.model.parameter_extract()  # 모델에서 파라미터 추출
+    # print("First params extracted")
+    # print("Server ready")
+    # gv.socketio.run(app, host='0.0.0.0', port=11110)

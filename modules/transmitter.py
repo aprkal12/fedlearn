@@ -30,8 +30,10 @@ def handle_parameter():
         # comp_data = base64.b64decode(data) # base64 디코딩
         # comp_data = bytes.fromhex(data['params']) # hex 디코딩
         # comp_data = request.data
+        
         decomp_data = zstd.decompress(comp_data)
         client_params = pickle.loads(decomp_data)
+        
         with transmitter_lock:
             gv.parameters[client_name] = client_params
             gv.post_num += 1
@@ -99,4 +101,3 @@ def all_clients_same_signal(signal):
         if status != signal:
             return False
     return True
-
