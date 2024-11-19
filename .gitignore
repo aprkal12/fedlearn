@@ -20,6 +20,13 @@ for_client_data_3/
 for_client_data_2/
 data
 experiment_results/
+coco/
+coco_yolo_clients/
+lstm_client_data/
+
+### YOLO ###
+runs/
+datasets/
 
 ### Flask ###
 instance/*

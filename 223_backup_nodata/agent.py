@@ -53,7 +53,7 @@ class ClientAgent:
         self.network_manager.post_params_signal("update")
         try:
             comp_data = self.network_manager.fetch_aggregated_params()
-            # print("집계된 파라미터 사이즈 : %.2f MB" % utils.bytes_to_mb(len(comp_data)))
+            print("집계된 파라미터 사이즈 : %.2f MB" % utils.bytes_to_mb(len(comp_data)))
             if comp_data:
                 self.params = self.model_manager.decompress_params(comp_data)
                 self.network_manager.post_params_signal("ready")

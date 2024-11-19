@@ -1,10 +1,11 @@
 import datetime
 from flask import current_app, request, g
 from flask_socketio import emit, SocketIO
+from ultralytics import YOLO
 from . import aggregate_bp
 import threading
 import torch
-from models.Resnet_infer import Inference
+from Resnet_infer import Inference
 import global_vars as gv
 import wandb
 
@@ -44,7 +45,7 @@ def aggregate_parameters():
             print("parameter aggregation start")
             gv.avg_weights = {}
             # tensorlist_float = [{key: value.float() for key, value in client_weights.items()} for client_weights in gv.parameters]
-            tensorlist_float = [{key: value.to(torch.bfloat16) for key, value in client_weights.items()} for client_weights in (client_data for client_data in gv.parameters.values())]
+            tensorlist_float = [{key: value.float() for key, value in client_weights.items()} for client_weights in (client_data for client_data in gv.parameters.values())]
 
             for key in tensorlist_float[0].keys():
                 gv.avg_weights[key] = torch.stack([client_weights[key] for client_weights in tensorlist_float], dim=0).mean(dim=0)
@@ -76,16 +77,16 @@ def global_model_update():
         gv.global_model_accuracy.append(100*val_metric)
 
     elif gv.model_name == 'YOLO':
-        gv.model.model.train()
-        gv.model.model.load_state_dict(gv.avg_weights)
-        gv.model.model.float()
-        yaml_path = "D:\\fedlearn\\coco_yolo_clients\\client_0_data.yaml"
-
-        gv.model.model.eval()
-
-        # 평가 수행 (val 메서드를 사용하여 정확도 계산)
+        # gv.model.model.train()
+        # gv.avg_weights = {k: v.clone() for k, v in gv.avg_weights.items()
+        model = YOLO('yolov10s.yaml')
+        model.model.load_state_dict(gv.avg_weights)
+        model.model.float()
+        yaml_path = "D:\\fed\\coco_yolo_clients\\client_0_data.yaml"
+        
         with torch.no_grad():
-            results = gv.model.val(data=yaml_path, split="test")  # yaml 파일을 통해 데이터 로드
+            model.model.eval()
+            results = model.val(data=yaml_path, split="test")  # yaml 파일을 통해 데이터 로드
 
         # 정확도 출력
         accuracy = results.box.map * 100  # mAP@0.5 (Mean Average Precision at 0.5 IOU)
@@ -94,7 +95,7 @@ def global_model_update():
         
     print("wandb logging...")
     wandb.log({"test_loss" : test_loss, "test_acc" : test_metric, "val_loss" : val_loss, "val_acc" : val_metric, 'train_loss' : train_loss, 'train_acc' : train_metric})
-    wandb.log({"val_loss" : val_loss, "val_acc" : val_metric})
+    # wandb.log({"val_loss" : val_loss, "val_acc" : val_metric})
 
     
     gv.last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

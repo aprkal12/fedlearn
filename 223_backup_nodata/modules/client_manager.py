@@ -7,7 +7,7 @@ import torch
 from . import client_bp
 import zstd
 import pickle
-from models.Resnet_infer import Inference
+from Resnet_infer import Inference
 import global_vars as gv
 import datetime
 

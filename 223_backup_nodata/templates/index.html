@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federated Learning Dashboard</title>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Federated Learning Dashboard</h1>
+
+        <!-- 가로 배치된 클라이언트 목록과 글로벌 상태 -->
+        <div class="top-section">
+            <div class="card">
+                <h2>Clients</h2>
+                <ul id="client_list">
+                    <!-- 클라이언트 목록이 여기에 표시됩니다 -->
+                </ul>
+            </div>
+            <div class="card">
+                <h2>Global Model Status</h2>
+                <p>round autorun : <span id="autorun-status">OFF</span> (total <span id="autorun-target-round">0</span> round)</p>
+                <p>current round: <span id="current-round">0</span></p>
+                <p>number of clients: <span id="client_num">0</span></p>
+                <p>global model accuracy: <span id="global-model-accuracy">0.0</span>%</p>
+                <p>last updated: <span id="last-updated">Never</span></p>
+            </div>
+        </div>
+
+        <!-- 정확도 그래프 -->
+        <div class="graph-section">
+            <h2>Global Model Accuracy</h2>
+            <canvas id="accuracyChart" width="500" height="200"></canvas>
+        </div>
+
+        <!-- 목표 라운드 입력 및 버튼들 -->
+        <div class="bottom-section">
+            <div class="round-section">
+                <h2>Round Autorun</h2>  <!-- 타이틀로 변경 -->
+                <label for="round-count">Enter target round > </label>
+                <input type="number" id="round-count" min="1" value="0">
+                <div class="round-buttons">
+                    <button onclick="startAutoRun()">start</button>
+                    <button onclick="stopAutoRun()">stop</button>
+                </div>
+            </div>
+
+            <div class="manual-section">
+                <h2>Manual Control</h2>
+                <div class="manual-buttons">
+                    <button onclick="startClientTraining()">train clients</button>
+                    <button onclick="aggregateParameters()">aggregate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var socket = io();
+            var accuracyChart;
+            var ctx = document.getElementById('accuracyChart').getContext('2d');
+
+            socket.on('update_data', function(data) {
+                console.log('Received data:', data);
+                document.getElementById('global-model-accuracy').textContent = data.global_model_accuracy.toFixed(2);
+                document.getElementById('current-round').textContent = data.current_round;
+                document.getElementById('last-updated').textContent = data.last_updated;
+                document.getElementById('client_num').textContent = data.client_num;
+                document.getElementById('autorun-status').textContent = data.autorun_status ? 'ON' : 'OFF';
+                document.getElementById('autorun-target-round').textContent = data.autorun_target_round || 0;
+                if(data.client_status == null){
+                    data.client_status = 0;
+                }
+                
+                var clientList = document.getElementById('client_list');
+                clientList.innerHTML = '';
+                // for (var client in data.clients) {
+                //     console.log('Client:', client, 'ID:', data.clients[client]);
+                //     var li = document.createElement('li');
+                //     li.textContent = client + ' - ' + data.client_status[client];
+                //     clientList.appendChild(li);
+                // }
+                for (var client in data.clients) {
+                    var li = document.createElement('li');
+                    li.textContent = client + ' - ' + data.client_status[client];
+
+                    // 연결 해제 버튼 추가
+                    var disconnectButton = document.createElement('button');
+                    disconnectButton.textContent = "disconnect";  // 버튼 텍스트
+                    disconnectButton.style.marginLeft = "10px";  // 간격을 위한 스타일
+                    disconnectButton.style.marginBottom = "10px";
+                    disconnectButton.style.fontSize = "0.9em";   // 버튼 글씨 크기 조정
+                    disconnectButton.style.width = "100px";       // 버튼 너비 조정
+                    disconnectButton.style.height = "30px";       // 버튼 높이 조정
+                    disconnectButton.style.padding = "0";         // 버튼 안쪽 여백 제거
+
+
+
+                    disconnectButton.onclick = (function(clientId) {
+                        return function() {
+                            disconnectClient(clientId);  // 연결 해제 함수 호출
+                        };
+                    })(client);  // 클라이언트 ID를 전달하기 위한 IIFE 사용
+                    // 리스트 아이템에 버튼 추가
+                    li.appendChild(disconnectButton);
+                    clientList.appendChild(li);
+                }
+                
+                // 정확도 그래프 업데이트
+                renderChart(data.rounds, data.accuracy_history);
+            });
+
+            // 클라이언트 상태 업데이트 처리
+            socket.on('update_status', function(data) {
+                var client = data.name;
+                var signal = data.signal;
+                
+                // 'name'이 리스트인지 확인
+                if (Array.isArray(client)) {
+                    // 리스트인 경우 모든 클라이언트 이름에 대해 상태 업데이트
+                    names.forEach(function(client) {
+                        updateClientStatus(client, signal);
+                    });
+                } else {
+                    // 단일 클라이언트 이름인 경우
+                    updateClientStatus(names, signal);
+                }
+            });
+            function disconnectClient(client_id) {
+                fetch(`/client/disconnect?client_id=${client_id}`, {
+                    method: 'POST',
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                })
+                .catch(error => {
+                    alert('Error disconnecting client: ' + error.message);
+                });
+            }
+            // 클라이언트 상태 업데이트를 위한 공통 함수
+            function updateClientStatus(client, signal) {
+                var li = document.querySelector(`li[data-client="${client}"]`);
+                if (li) {
+                    var statusSpan = li.querySelector('.status-span');
+                    if (!statusSpan) {
+                        statusSpan = document.createElement('span');
+                        statusSpan.classList.add('status-span');
+                        li.appendChild(statusSpan);
+                    }
+                    statusSpan.textContent = ` - Status: ${signal}`;
+                }
+            }
+            // 
+            // function renderChart(labels, data) {
+            //     if (data.length > 0) {
+            //         // 정확도 데이터에서 최소값과 최대값 계산
+            //         var minAccuracy = Math.min(...data);
+            //         var maxAccuracy = Math.max(...data);
+
+            //         // 최소값과 최대값에 +-10% 범위를 적용
+            //         var minY = Math.max(minAccuracy - 10, 0);  // 최소값이 0 미만으로 내려가지 않도록 설정
+            //         var maxY = Math.min(maxAccuracy + 10, 100);  // 최대값이 100을 넘지 않도록 설정
+            //     }else{
+            //         var minY = 0;
+            //         var maxY = 100;
+            //     }
+                
+            //     if (accuracyChart) {
+            //         accuracyChart.destroy();
+            //     }
+            //     accuracyChart = new Chart(ctx, {
+            //         type: 'line',
+            //         data: {
+            //             labels: labels,  // 라운드 번호 리스트
+            //             datasets: [{
+            //                 label: 'Accuracy per Round (%)',
+            //                 data: data,  // 정확도 리스트
+            //                 borderColor: 'rgba(75, 192, 192, 1)',
+            //                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            //                 fill: false,
+            //             }]
+            //         },
+            //         options: {
+            //             scales: {
+            //                 x: {
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Round'
+            //                     }
+            //                 },
+            //                 y: {
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Accuracy (%)'
+            //                     },
+            //                     // min: 0,
+            //                     // max: 100
+            //                     min: minY,
+            //                     max: maxY
+            //                 }
+            //             }
+            //         }
+            //     });
+            // }
+            function renderChart(labels, data) {
+                if (data.length > 0) {
+                    // 정확도 데이터에서 최소값과 최대값 계산
+                    var minAccuracy = Math.min(...data);
+                    var maxAccuracy = Math.max(...data);
+
+                    // 최소값과 최대값에 +-10% 범위를 적용
+                    var minY = Math.max(minAccuracy - 10, 0);  // 최소값이 0 미만으로 내려가지 않도록 설정
+                    var maxY = Math.min(maxAccuracy + 10, 100);  // 최대값이 100을 넘지 않도록 설정
+                } else {
+                    var minY = 0;
+                    var maxY = 100;
+                }
+
+                if (accuracyChart) {
+                    accuracyChart.destroy();
+                }
+
+                let fontSize = 16;
+                if (labels.length > 20) {
+                    fontSize = 12;
+                }else if(labels.length > 30){
+                    fontSize = 4;
+                }else if(labels.length > 40){
+                    fontSize = 1;
+                }
+
+                accuracyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,  // 라운드 번호 리스트
+                        datasets: [{
+                            label: 'Accuracy per Round (%)',
+                            data: data,  // 정확도 리스트
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            fill: false,
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 3, // 수정
+                                clip: false,
+                                font: {
+                                    weight: 'bold',
+                                    size: fontSize
+                                },
+                                formatter: function(value) {
+                                    return value.toFixed(1) + '%';  // 소수점 첫째 자리까지만 반올림하여 표시
+                                },
+                            }
+                        }]
+                    },
+                    options: {
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 25 // 여기서 패딩을 추가하여 오른쪽 라벨이 잘리지 않도록 함
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Round',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Accuracy (%)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                min: minY,
+                                max: maxY,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toFixed(1) + '%';  // y축 라벨도 소수점 첫째 자리까지 표시
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            }
+
+
+
+
+            socket.emit('request_update');
+
+            socket.on('reload', function() {
+                location.reload();
+            });
+        });
+
+        function startAutoRun() {  // Auto Run
+            const roundCount = document.getElementById('round-count').value; // 라운드 수 가져오기
+            fetch(`/client/autorun?rounds=${roundCount}`, {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Auto run started for ' + roundCount + ' rounds.');
+            })
+            .catch(error => {
+                alert('Error starting auto run: ' + error.message);
+            });
+        }
+
+        // 현재 라운드를 종료하는 함수
+        function stopAutoRun() {
+            fetch('/client/autorun', {
+                method: 'DELETE',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('이번 라운드까지만 진행하고 종료합니다.');
+            })
+            .catch(error => {
+                alert('Error stopping after current round: ' + error.message);
+            });
+        }
+
+        function aggregateParameters() {
+            fetch('/aggregate', {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            });
+        }
+        function startClientTraining() {
+            fetch('/client/training', {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            });
+        }
+    </script>
+</body>
+</html>

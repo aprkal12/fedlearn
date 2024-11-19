@@ -1,9 +1,9 @@
 from flask import Flask, current_app, render_template, g, request
 from flask_socketio import SocketIO, join_room, rooms
 from ultralytics import YOLO
-from models.Resnet_setdata import DataManager
+from Resnet_setdata import DataManager
 from modules import transmitter_bp, aggregate_bp, client_bp
-from models.Resnet_infer import Inference
+from Resnet_infer import Inference
 import global_vars as gv
 import datetime
 import wandb
@@ -80,33 +80,33 @@ def mainpage():
     return render_template('index.html', clients=gv.client_list)
 
 if __name__ == '__main__':
-    gv.model_name = 'YOLO'
+    gv.model_name = 'ResNet'
     if gv.model_name == 'ResNet':
         gv.model = Inference()
         # data_manager = DataManager()
-        # data_manager.split_data(num_clients=5, data_size=0.5, iid=False)
+        # data_manager.split_data(num_clients=3, data_size=1, iid=False)
         gv.model.set_variable(0.2)
         gv.model.set_epoch(1)
         gv.model.run()
 
     elif gv.model_name == 'YOLO':
         gv.model = YOLO('yolov10s.yaml')
-        yaml_path = "D:\\fedlearn\\coco_yolo_clients\\client_0_data.yaml"
+        yaml_path = "D:\\fed\\coco_yolo_clients\\client_0_data.yaml"
 
         # 클라이언트 학습 실행 (예: Client 0에서 학습)
-        gv.model.train(data=yaml_path, epochs=2, batch=16, imgsz=320)
+        gv.model.train(data=yaml_path, epochs=2, batch=8, imgsz=640)
     
-    # # wandb.init(
-        # #     project="Fed_Learning",
-        # #     entity="aprkal12",
-        # #     config={
-        # #         "learning_rate": 0.001,
-        # #         "architecture": "Resnet18",
-        # #         "dataset": "CIFAR-10",
-        # #     }
-        # # )
-        # # wandb.run.name = "Resnet18_CIFAR-10_D=100%_E=2_C=5_iid"
-        # # print("Wandb initialized")
+    wandb.init(
+            project="Fed_Learning",
+            entity="aprkal12",
+            config={
+                "learning_rate": 0.001,
+                "architecture": "Resnet18",
+                "dataset": "CIFAR-10",
+            }
+        )
+    wandb.run.name = "Resnet18_CIFAR-10_D=100%_E=2_C=3_non_iid"
+    print("Wandb initialized")
 
     print("="*10)
     print("Start server")

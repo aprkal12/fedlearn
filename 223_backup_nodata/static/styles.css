@@ -1,0 +1,178 @@
+/* 전체 화면에서 중앙 정렬 및 기본 레이아웃 설정 */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+/* 메인 컨테이너 */
+.container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    max-width: 1000px; /* 전체 가로 길이 */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* 제목 */
+h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 2em;
+}
+
+/* 가로 배치된 클라이언트 목록과 글로벌 상태 */
+.top-section {
+    display: flex;
+    justify-content: space-between;
+    width: 100%; /* 전체 컨테이너의 너비를 따라감 */
+    max-width: 1000px; /* 동일한 최대 너비 */
+    gap: 20px;
+}
+
+.card {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    flex: 1;
+    text-align: left;
+}
+
+/* 카드 제목을 중앙 정렬 */
+.card h2 {
+    text-align: center; /* 제목만 중앙 정렬 */
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+/* 카드 내부 요소들을 왼쪽 정렬 */
+.card p, .card ul {
+    text-align: left; /* 내부 요소는 왼쪽 정렬 */
+    list-style-type: none;
+}
+
+/* 그래프 섹션 */
+.graph-section {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    width: 100%; /* 전체 컨테이너와 동일한 너비 */
+    max-width: 1000px; /* 동일한 최대 너비 */
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.graph-section canvas {
+    width: 100%; /* 그래프 너비를 컨테이너에 맞추기 */
+    height: auto;
+    max-width: 1000px;
+}
+
+/* 하단 섹션: autorun 및 버튼들 */
+.bottom-section {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    max-width: 1000px; /* 동일한 최대 너비 */
+    margin-top: 20px;
+}
+
+/* autorun 섹션 */
+.round-section {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    text-align: center;
+}
+
+.manual-section {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    text-align: center;
+}
+
+/* 목표 라운드 입력 필드 */
+input[type="number"] {
+    padding: 5px;
+    margin-top: 5px;
+    width: 80px;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    margin-left: 10px;
+}
+
+/* autorun 버튼 가로 정렬 */
+.round-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 15px;
+}
+.manual-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 74px;
+}
+
+/* Train clients, aggregate 버튼 - 높이 제한 및 중간 정렬 */
+/* .buttons-container {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    height: 50px;
+    align-items: center;
+} */
+
+button {
+    background-color: #3B82F6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    text-align: center;
+    width: 140px;
+    height: 40px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* 추가적인 스타일링으로 좀 더 깔끔한 입력 필드와 버튼 배치 */
+.round-section label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+input[type="number"] {
+    margin-left: 5px;
+}
+
+.round-buttons button {
+    flex-grow: 1;
+    max-width: 45%;
+}

@@ -3,31 +3,27 @@ import pickle
 import sys
 
 import torch
+from ultralytics import YOLO
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from models.Resnet_infer import Inference
 import zstd
 
-class ModelManager:
+class YOLOModelManager:
     def __init__(self):
-        self.model = Inference()
-        self.model.set_variable(client_id=1, non_iid_set=True, num_clients=2)
-        self.model.set_epoch(2)
-    
-    def set_epoch(self, n):
-        self.model.set_epoch(n)
+        self.model = YOLO("yolov10s.yaml")
+        self.yaml_path = "D:\\fed\\coco_yolo_clients\\client_0_data.yaml"
 
     def load_params(self, params):
-        self.model.load_parameter(params)
+        self.model.model.load_state_dict(params)
         self.model.model.float()
     
     def extract_params(self):
         self.model.model.to(torch.bfloat16)
-        return self.model.parameter_extract()
+        return self.model.model.state_dict()
     
     def train_model(self):
-        self.model.run()
+        self.model.train(data=self.yaml_path, epochs=5, batch=8, imgsz=640)
     
     def compress_params(self, params):
         binary_data = pickle.dumps(params)

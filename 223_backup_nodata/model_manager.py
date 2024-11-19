@@ -6,13 +6,13 @@ import torch
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from models.Resnet_infer import Inference
+from Resnet_infer import Inference
 import zstd
 
 class ModelManager:
     def __init__(self):
         self.model = Inference()
-        self.model.set_variable(client_id=1, non_iid_set=True, num_clients=2)
+        self.model.set_variable(client_id=0, non_iid_set=True, num_clients=2)
         self.model.set_epoch(2)
     
     def set_epoch(self, n):
