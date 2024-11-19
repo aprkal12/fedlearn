@@ -23,6 +23,7 @@ experiment_results/
 coco/
 coco_yolo_clients/
 lstm_client_data/
+223_backup.zip
 
 ### YOLO ###
 runs/
