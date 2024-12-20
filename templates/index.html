@@ -163,58 +163,7 @@
                     statusSpan.textContent = ` - Status: ${signal}`;
                 }
             }
-            // 
-            // function renderChart(labels, data) {
-            //     if (data.length > 0) {
-            //         // 정확도 데이터에서 최소값과 최대값 계산
-            //         var minAccuracy = Math.min(...data);
-            //         var maxAccuracy = Math.max(...data);
-
-            //         // 최소값과 최대값에 +-10% 범위를 적용
-            //         var minY = Math.max(minAccuracy - 10, 0);  // 최소값이 0 미만으로 내려가지 않도록 설정
-            //         var maxY = Math.min(maxAccuracy + 10, 100);  // 최대값이 100을 넘지 않도록 설정
-            //     }else{
-            //         var minY = 0;
-            //         var maxY = 100;
-            //     }
-                
-            //     if (accuracyChart) {
-            //         accuracyChart.destroy();
-            //     }
-            //     accuracyChart = new Chart(ctx, {
-            //         type: 'line',
-            //         data: {
-            //             labels: labels,  // 라운드 번호 리스트
-            //             datasets: [{
-            //                 label: 'Accuracy per Round (%)',
-            //                 data: data,  // 정확도 리스트
-            //                 borderColor: 'rgba(75, 192, 192, 1)',
-            //                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            //                 fill: false,
-            //             }]
-            //         },
-            //         options: {
-            //             scales: {
-            //                 x: {
-            //                     title: {
-            //                         display: true,
-            //                         text: 'Round'
-            //                     }
-            //                 },
-            //                 y: {
-            //                     title: {
-            //                         display: true,
-            //                         text: 'Accuracy (%)'
-            //                     },
-            //                     // min: 0,
-            //                     // max: 100
-            //                     min: minY,
-            //                     max: maxY
-            //                 }
-            //             }
-            //         }
-            //     });
-            // }
+            
             function renderChart(labels, data) {
                 if (data.length > 0) {
                     // 정확도 데이터에서 최소값과 최대값 계산

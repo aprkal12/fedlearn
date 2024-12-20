@@ -63,6 +63,7 @@ axs[1].text(0, centralized_accuracy_value, f"{centralized_accuracy_value}", colo
 
 axs[1].set_title("Non-IID Environment")
 axs[1].set_xlabel("Epochs")
+axs[1].set_ylabel("Accuracy")
 axs[1].set_xticks(x_positions)
 axs[1].set_xticklabels(x_labels)  # 사용자 정의 레이블 적용
 axs[1].legend()
