@@ -41,9 +41,9 @@ RESTful API를 활용하여 동적 연합학습 플랫폼을 설계하고, 모�
 ![URI](https://github.com/aprkal12/fedlearn/blob/master/static/uri.jpg?raw=true)
 
 ### 대시보드
-![Dashboard Preview](https://github.com/aprkal12/fedlearn/blob/master/static/dashboard2.png?raw=true)
+<img src="https://github.com/aprkal12/fedlearn/blob/master/static/dashboard2.png?raw=true" width="600" height="500"/>
 
-![Dashboard Preview](https://github.com/aprkal12/fedlearn/blob/master/static/dashboard.png?raw=true)
+<img src="https://github.com/aprkal12/fedlearn/blob/master/static/dashboard.png?raw=true" width="500" height="600"/>
 
 - **클라이언트 모니터링:**
   - 상태: `join`, `ready`, `training`, `update`, `finish`.
@@ -53,32 +53,34 @@ RESTful API를 활용하여 동적 연합학습 플랫폼을 설계하고, 모�
 ---
 
 ## 🧪 실험 및 구현 결과
-- **실험 환경:**
+- ### 실험 환경:
   - 서버와 다수의 클라이언트 구성.
   - 모델: ResNet-18, ResNet-50.
   - 데이터셋: CIFAR-10 / 6만장의 이미지 데이터 / IID, Non-IID 데이터 환경 구성.
 
-### IID / Non-IID 데이터 구성
-![iid](https://github.com/aprkal12/fedlearn/blob/master/static/IID.png?raw=true) | ![noniid](https://github.com/aprkal12/fedlearn/blob/master/static/NonIID.png?raw=true)
+    **IID / Non-IID 데이터 구성**
 
-- **실험 결과:**
-  - **IID 환경:** 클라이언트 수 증가 시 정확도는 약간 감소.
-  - **Non-IID 환경:** 불균형 데이터에서 안정적인 정확도 유지.
+    <img src="https://github.com/aprkal12/fedlearn/blob/master/static/IID.png?raw=true" width="300" height="300"/> <img src="https://github.com/aprkal12/fedlearn/blob/master/static/NonIID.png?raw=true" width="300" height="300"/>
+
+- ### 실험 결과:
+  - IID 환경: 클라이언트 수 증가 시 정확도는 약간 감소.
+  - Non-IID 환경: 불균형 데이터에서 안정적인 정확도 유지.
   - 모델 경량화를 통해 JSON 대비 약 **93% 용량 감소**.
   - Zstd 알고리즘 적용으로 압축 시간과 효율 간의 최적화 달성.
 
-### 모델 경량화
-- JSON, Binary, Raw data, 제안 방안 비교
-- JSON 대비 약 93%, 직렬화 및 원본데이터 대비 약 60% 용량 감소
+    **모델 경량화**
+    - JSON, Binary, Raw data, 제안 방안 비교
+    - JSON 대비 약 93%, 직렬화 및 원본데이터 대비 약 60% 용량 감소
 
-![result](https://github.com/aprkal12/fedlearn/blob/master/static/result.png?raw=true)
+    <img src="https://github.com/aprkal12/fedlearn/blob/master/static/result.png?raw=true" width="500" height="300"/>
 
-### 제안 플랫폼을 이용한 연합학습 수행 결과
-- **중앙집중식 학습 방법(기존의 딥러닝 방식)을 통해 100회 학습하여 얻는 정확도와 비교**
-  - 연합학습을 통해 중앙집중식 학습에 근접하는 모델 정확도 확보 
-  - 데이터 수가 고정된 실험환경으로 클라이언트 수가 많아질 수록 클라이언트 로컬 데이터에 과적합되어 모델 집계 후 성능이 저하되는 것으로 추정됨
+    **제안 플랫폼을 이용한 연합학습 수행 결과**
+    - **중앙집중식 학습 방법(기존의 딥러닝 방식)을 통해 100회 학습하여 얻는 정확도와 비교**
+      - 연합학습을 통해 중앙집중식 학습에 근접하는 모델 정확도 확보 
+      - 데이터 수가 고정된 실험환경으로 클라이언트 수가 많아질 수록 클라이언트 로컬 데이터에 과적합되어 모델 집계 후 성능이 저하되는 것으로 추정됨
   
-![graph](https://github.com/aprkal12/fedlearn/blob/master/static/output.png?raw=true)
+    ![graph](https://github.com/aprkal12/fedlearn/blob/master/static/output.png?raw=true)
+    
 ---
 
 ## 🛠 기술 스택
