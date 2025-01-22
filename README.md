@@ -60,7 +60,7 @@ RESTful API를 활용하여 동적 연합학습 플랫폼을 설계하고, 모�
 
     **IID / Non-IID 데이터 구성**
 
-    <img src="https://github.com/aprkal12/fedlearn/blob/master/static/IID.png?raw=true" width="300" height="300"/> <img src="https://github.com/aprkal12/fedlearn/blob/master/static/NonIID.png?raw=true" width="300" height="300"/>
+    <img src="https://github.com/aprkal12/fedlearn/blob/master/static/IID.png?raw=true" width="300" height="350"/> <img src="https://github.com/aprkal12/fedlearn/blob/master/static/NonIID.png?raw=true" width="300" height="350"/>
 
 - ### 실험 결과:
   - IID 환경: 클라이언트 수 증가 시 정확도는 약간 감소.
@@ -80,7 +80,7 @@ RESTful API를 활용하여 동적 연합학습 플랫폼을 설계하고, 모�
       - 데이터 수가 고정된 실험환경으로 클라이언트 수가 많아질 수록 클라이언트 로컬 데이터에 과적합되어 모델 집계 후 성능이 저하되는 것으로 추정됨
   
     ![graph](https://github.com/aprkal12/fedlearn/blob/master/static/output.png?raw=true)
-    
+
 ---
 
 ## 🛠 기술 스택
